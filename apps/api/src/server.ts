@@ -240,8 +240,7 @@ async function connectMongoWithRetry() {
   try {
     await mongoose.connect(uri, { family: 4, serverSelectionTimeoutMS: 5000 });
     mongoConnected = true;
-    if (memoryProducts.length > 0) {
-      await Product.deleteMany({});
+    if ((await Product.countDocuments()) === 0 && memoryProducts.length > 0) {
       await Product.insertMany(memoryProducts.map(({ name, price, soluong, image }) => ({ name, price, soluong, image })));
     }
     await syncFromMongo();
