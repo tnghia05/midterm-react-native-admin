@@ -5,7 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { api } from '../api';
 import type { Product, ProductDraft } from '../types';
 import { colors, font, money, number, radius, space, stockLevel, type StockLevel } from '../theme';
-import { Brand, Button, Chip, IconButton, SectionNote } from '../ui';
+import { Brand, Button, Chip, IconButton, PriceSlider, SectionNote } from '../ui';
 import { ProductCard } from '../components/ProductCard';
 import { ProductFormModal } from '../components/ProductFormModal';
 import { ProductDetailModal } from '../components/ProductDetailModal';
@@ -14,7 +14,6 @@ import { DataToolsModal, MobileConnectModal } from '../components/AdvancedModals
 
 type Sort = 'new' | 'priceAsc' | 'priceDesc' | 'stock' | 'valueDesc';
 type Filter = 'all' | StockLevel;
-type PriceRange = 'all' | 'under200' | 'mid' | 'over350';
 
 const SORTS: { key: Sort; label: string }[] = [
   { key: 'new', label: 'Mới nhất' },
@@ -22,13 +21,6 @@ const SORTS: { key: Sort; label: string }[] = [
   { key: 'priceDesc', label: 'Giá ↓' },
   { key: 'stock', label: 'Tồn ít' },
   { key: 'valueDesc', label: 'Giá trị cao' },
-];
-
-const PRICE_RANGES: { key: PriceRange; label: string }[] = [
-  { key: 'all', label: 'Mọi mức giá' },
-  { key: 'under200', label: '< 200k' },
-  { key: 'mid', label: '200k – 350k' },
-  { key: 'over350', label: '> 350k' },
 ];
 
 export function ProductsScreen({ token, onLogout }: { token: string; onLogout: () => void }) {
@@ -53,7 +45,7 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>('new');
   const [filter, setFilter] = useState<Filter>('all');
-  const [priceRange, setPriceRange] = useState<PriceRange>('all');
+  const [priceCap, setPriceCap] = useState<number | null>(null);
 
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -108,13 +100,16 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
     };
   }, [products]);
 
+  const maxCatalogPrice = useMemo(() => {
+    const highest = products.reduce((m, p) => Math.max(m, p.price), 0);
+    return Math.max(500_000, Math.ceil(highest / 50_000) * 50_000);
+  }, [products]);
+
   const visible = useMemo(() => {
     const q = query.trim().toLocaleLowerCase('vi');
     const list = products.filter((p) => {
       if (filter !== 'all' && stockLevel(p.soluong) !== filter) return false;
-      if (priceRange === 'under200' && p.price >= 200_000) return false;
-      if (priceRange === 'mid' && (p.price < 200_000 || p.price > 350_000)) return false;
-      if (priceRange === 'over350' && p.price <= 350_000) return false;
+      if (priceCap !== null && p.price > priceCap) return false;
       if (q && !p.name.toLocaleLowerCase('vi').includes(q)) return false;
       return true;
     });
@@ -123,7 +118,7 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
     if (sort === 'stock') list.sort((a, b) => a.soluong - b.soluong);
     if (sort === 'valueDesc') list.sort((a, b) => b.price * b.soluong - a.price * a.soluong);
     return list;
-  }, [products, query, sort, filter, priceRange]);
+  }, [products, query, sort, filter, priceCap]);
 
   const save = async (draft: ProductDraft) => {
     if (editor.product) await api.update(token, editor.product._id, draft);
@@ -320,9 +315,7 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
               <Chip key={key} label={label} count={stats.counts[key]} selected={filter === key} onPress={() => setFilter(key)} />
             ))}
             <View style={styles.dividerDot} />
-            {PRICE_RANGES.map((r) => (
-              <Chip key={r.key} label={r.label} selected={priceRange === r.key} onPress={() => setPriceRange(r.key)} />
-            ))}
+            <PriceSlider maxPrice={maxCatalogPrice} value={priceCap} onChange={setPriceCap} />
             <View style={styles.rightControls}>
               <Chip
                 label={selectMode ? `Đang chọn (${selectedIds.length})` : 'Chọn nhiều'}
@@ -365,11 +358,9 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
             {SORTS.map((s) => (
               <Chip key={s.key} label={s.label} selected={sort === s.key} onPress={() => setSort(s.key)} />
             ))}
-            <View style={styles.dividerDot} />
-            {PRICE_RANGES.filter((r) => r.key !== 'all').map((r) => (
-              <Chip key={r.key} label={r.label} selected={priceRange === r.key} onPress={() => setPriceRange((curr) => (curr === r.key ? 'all' : r.key))} />
-            ))}
           </ScrollView>
+
+          <PriceSlider maxPrice={maxCatalogPrice} value={priceCap} onChange={setPriceCap} compact />
         </View>
       )}
 
@@ -406,7 +397,7 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
       <View style={styles.emptyIcon}><Feather name={products.length ? 'search' : 'package'} size={26} color="#9E8CAF" /></View>
       <Text style={styles.emptyTitle}>{products.length ? 'Không có sản phẩm phù hợp' : 'Shop chưa có sản phẩm'}</Text>
       <Text style={styles.emptyCopy}>{products.length ? 'Thử đổi từ khóa, khoảng giá hoặc bộ lọc tồn kho.' : 'Thêm sản phẩm đầu tiên kèm ảnh, giá và số lượng.'}</Text>
-      {products.length ? <Button label="Đặt lại bộ lọc" variant="secondary" onPress={() => { setQuery(''); setFilter('all'); setPriceRange('all'); }} compact />
+      {products.length ? <Button label="Đặt lại bộ lọc" variant="secondary" onPress={() => { setQuery(''); setFilter('all'); setPriceCap(null); }} compact />
         : <Button label="Thêm sản phẩm" iconName="plus" onPress={() => setEditor({ open: true })} compact />}
     </View>
   );
