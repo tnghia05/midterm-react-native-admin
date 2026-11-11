@@ -18,7 +18,7 @@ function resolveDefaultApiUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
   if (envUrl && Platform.OS === 'web') return envUrl;
   if (envUrl && !envUrl.includes('127.0.0.1') && !envUrl.includes('localhost')) return envUrl;
-  return 'http://192.168.1.13:3001/api';
+  return 'http://172.26.29.75:3001/api';
 }
 
 export const API_URL = resolveDefaultApiUrl();
