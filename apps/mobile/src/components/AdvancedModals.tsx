@@ -154,8 +154,8 @@ export function MobileConnectModal({
   onToggleMobileFrame: () => void;
   onClose: () => void;
 }) {
-  const [lanIps, setLanIps] = useState<string[]>(['172.26.29.75']);
-  const [selectedIp, setSelectedIp] = useState('172.26.29.75');
+  const [lanIps, setLanIps] = useState<string[]>(['192.168.1.13']);
+  const [selectedIp, setSelectedIp] = useState('192.168.1.13');
   const [mode, setMode] = useState<'expo' | 'web'>('expo');
 
   useEffect(() => {
@@ -163,7 +163,7 @@ export function MobileConnectModal({
     api.health().then((info) => {
       if (info.lanIps?.length) {
         setLanIps(info.lanIps);
-        setSelectedIp(info.lanIps[0] ?? '172.26.29.75');
+        setSelectedIp(info.lanIps[0] ?? '192.168.1.13');
       }
     }).catch(() => undefined);
   }, [visible]);
