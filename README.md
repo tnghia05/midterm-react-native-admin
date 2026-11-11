@@ -21,27 +21,43 @@
 
 ---
 
-### 2. Chức năng Quản trị & Nghiệp vụ nâng cao
-- 🔐 **Xác thực Quản trị viên (JWT Authentication)**: Bảo vệ toàn bộ các thao tác Thêm / Sửa / Xóa bằng Bearer Token (`POST /api/auth/login`), hỗ trợ nút điền nhanh tài khoản mẫu để kiểm thử.
-- 📦 **Quản lý sản phẩm toàn diện (CRUD)**:
-  - **Hiển thị danh sách**: Chuyển đổi linh hoạt giữa chế độ **Lưới (Grid)** và **Danh sách (List)**, tối ưu giao diện自适应 (Responsive) trên cả màn hình máy tính (Web) lẫn điện thoại (Mobile 2 cột).
-  - **Thêm mới & Cập nhật**: Kiểm tra hợp lệ dữ liệu tức thì (validation) trên cả Frontend và Backend.
-  - **Xem chi tiết & Nhân bản**: Xem thông số giá trị tồn kho của từng mặt hàng, nhân bản nhanh sản phẩm mẫu.
-  - **Xóa sản phẩm an toàn**: Hộp thoại xác nhận trước khi xóa vĩnh viễn khỏi MongoDB Atlas.
-- 📸 **Nhập hình ảnh đa phương thức & Tải lên Cloudflare R2**:
-  - Hỗ trợ **Chọn ảnh từ thư viện máy**, **Chụp ảnh trực tiếp bằng Camera** trên điện thoại (`expo-image-picker`), hoặc **Dán link URL ảnh**.
-  - Tự động ký xác thực AWS Signature V4 (`apps/api/src/r2.ts`) để tải ảnh lên bucket **Cloudflare R2** và trả về đường dẫn CDN công khai.
-- 🎚️ **Tìm kiếm, Thanh trượt lọc giá (Price Slider) & Sắp xếp đa tiêu chí**:
-  - Tìm kiếm tức thì theo tên sản phẩm tiếng Việt.
-  - Lọc nhanh theo tình trạng tồn kho: **Tất cả**, **Còn hàng**, **Sắp hết (`1–5`)**, **Hết hàng (`0`)**.
-  - **Thanh trượt lọc giá (`PriceSlider`)**: Kéo mượt mà trên cả chuột máy tính lẫn màn hình cảm ứng điện thoại để lọc sản phẩm theo mức giá trần (`≤ ... ₫`), kèm nút `×` đặt lại nhanh.
-  - Sắp xếp theo 5 tiêu chí: **Mới nhất**, **Giá tăng dần (`Giá ↑`)**, **Giá giảm dần (`Giá ↓`)**, **Tồn kho ít nhất (`Tồn ít`)**, **Giá trị tồn kho cao nhất (`Giá trị cao`)**.
-- ⚡ **Điều chỉnh tồn kho 1 chạm & Thao tác hàng loạt (Bulk Actions)**:
-  - Nút `-1` / `+1` ngay trên thẻ sản phẩm và `-5` / `-1` / `+1` / `+5` / `+10` trong hộp thoại chi tiết.
-  - Chế độ **Chọn nhiều sản phẩm** để cộng thêm `+10` tồn kho, giảm giá `-10%`, hoặc xóa hàng loạt.
-- 🔄 **Nhập / Xuất JSON & Mã QR Expo Go trực tiếp**:
-  - Xuất hoặc nhập hàng loạt danh sách sản phẩm chuẩn 4 trường (`products.json`).
-  - Tích hợp thẻ **Mã QR Expo** ngay trên thanh công cụ Web để quét mở nhanh ứng dụng trên điện thoại qua **Expo Go**.
+### 2. Giao diện & Chức năng Quản trị thực tế trên ứng dụng (Web & Mobile)
+- 🔐 **Xác thực Quản trị viên (JWT Authentication)**: Bảo vệ toàn bộ các thao tác Thêm / Sửa / Xóa bằng Bearer Token (`POST /api/auth/login`), hỗ trợ nút điền nhanh tài khoản mẫu (`admin@example.com`) để kiểm thử.
+- 📊 **Bảng điều khiển Tổng quan kho hàng (Dashboard)**:
+  - Hiển thị trực quan 4 chỉ số thời gian thực: **Sản phẩm** (`12 mặt hàng`), **Tồn kho** (`203 đơn vị`), **Giá trị kho** (`50.947.000 ₫`) và **Cần nhập** (`4 sắp/hết hàng`).
+  - **Thanh Tình trạng kho**: Phân bổ tỷ lệ trực quan giữa mặt hàng **Còn (`8`)**, **Sắp hết (`3`)** và **Hết (`1`)**.
+  - Giao diện tương thích đa thiết bị (**Responsive**): Bố cục thanh bên (Sidebar) kèm lưới 4 cột trên trình duyệt **Web**, và tự động thu gọn thành lưới 2 cột kèm nút nổi `+` trên **Điện thoại (Expo Go)**.
+
+#### 🖥️ Giao diện Tổng quan Quản lý sản phẩm trên Web (`http://localhost:8081`)
+![Giao diện Tổng quan Quản lý sản phẩm trên Web](./screenshots_app/app_1_web_dashboard.jpg)
+
+#### 📱 Giao diện Quản lý sản phẩm thực tế trên Điện thoại (Expo Go)
+<p align="center">
+  <img src="./screenshots_app/app_2_mobile_dashboard.jpg" alt="Giao diện Quản lý sản phẩm trên Điện thoại" width="420" />
+</p>
+
+- 📦 **Quản lý sản phẩm toàn diện (CRUD) & Tải ảnh lên Cloudflare R2**:
+  - **Thêm mới & Cập nhật sản phẩm**: Form nhập liệu hỗ trợ chọn nhanh mức giá gợi ý (`159k`, `239k`, `299k`, `450k`) và cộng nhanh số lượng tồn kho (`+5`, `+10`, `+25`, `+50`, `Hết hàng (0)`).
+  - **Nhập hình ảnh đa phương thức**: Hỗ trợ **Thư viện** (chọn ảnh từ máy), **Chụp ảnh** (mở trực tiếp Camera trên điện thoại qua `expo-image-picker`), hoặc **Link ảnh** (dán URL). Ảnh tải lên từ thiết bị được tự động ký xác thực AWS Signature V4 (`apps/api/src/r2.ts`) đẩy lên bucket **Cloudflare R2** và trả về đường dẫn CDN công khai.
+  - **Xóa sản phẩm an toàn**: Hộp thoại xác nhận **"Xóa sản phẩm này?"** trước khi xóa vĩnh viễn khỏi cửa hàng và MongoDB Atlas.
+
+#### ➕ Hộp thoại Thêm sản phẩm mới (Hỗ trợ Thư viện / Chụp ảnh / Link ảnh)
+![Hộp thoại Thêm sản phẩm mới](./screenshots_app/app_3_add_product_modal.jpg)
+
+#### 🗑️ Hộp thoại Xác nhận xóa sản phẩm
+![Hộp thoại Xác nhận xóa sản phẩm](./screenshots_app/app_4_delete_confirm_modal.jpg)
+
+- 🎚️ **Tìm kiếm, Thanh trượt lọc giá (`PriceSlider`) & Sắp xếp đa tiêu chí**:
+  - Tìm kiếm tức thì theo tên sản phẩm tiếng Việt (`Tìm theo tên sản phẩm...`).
+  - Lọc nhanh theo tình trạng tồn kho: **Tất cả (`12`)**, **Còn hàng (`8`)**, **Sắp hết (`3`)**, **Hết hàng (`1`)**.
+  - **Thanh trượt lọc giá (`Giá: Mọi mức giá` / `≤ ... ₫`)**: Kéo mượt mà trên cả chuột máy tính lẫn màn hình cảm ứng điện thoại để lọc sản phẩm theo mức giá trần, kèm nút `×` đặt lại nhanh.
+  - Sắp xếp theo 5 tiêu chí: **Mới nhất**, **Giá ↑**, **Giá ↓**, **Tồn ít**, **Giá trị cao**.
+- ⚡ **Điều chỉnh tồn kho 1 chạm & Thao tác hàng loạt (`Chọn nhiều`)**:
+  - Nút `-` / `+` điều chỉnh trực tiếp số lượng tồn kho ngay trên từng thẻ sản phẩm và `-5` / `-1` / `+1` / `+5` / `+10` trong hộp thoại chi tiết.
+  - Chế độ **Chọn nhiều** cho phép cộng thêm `+10` tồn kho, giảm giá `-10%`, hoặc xóa hàng loạt.
+- 🔄 **Nhập / Xuất dữ liệu JSON & Mã QR Expo Go trực tiếp**:
+  - Nút **Nhập / Xuất** hỗ trợ tải xuống hoặc nhập hàng loạt danh sách sản phẩm chuẩn 4 trường (`products.json`).
+  - Tích hợp khung **Mở trên Expo Go (`exp://192.168.1.13:8081`)** ngay trên thanh bên trái giao diện Web để quét mã QR mở nhanh ứng dụng trên điện thoại.
 
 ---
 
@@ -79,6 +95,7 @@ midterm-react-native-admin/
 │       │       └── ProductsScreen.tsx   # Màn hình Tổng quan Quản lý sản phẩm
 │       ├── App.tsx                      # Điểm vào ứng dụng React Native
 │       └── .env.example                 # Mẫu cấu hình biến môi trường Frontend
+├── screenshots_app/                     # Ảnh chụp giao diện thực tế trên Web & Điện thoại (Expo Go)
 ├── screenshots_mongo/                   # Ảnh chụp cơ sở dữ liệu MongoDB Atlas thực tế
 ├── Bao_Cao_Giua_Ky_React_Native_Admin.docx # File báo cáo Word chi tiết
 ├── package.json                         # Scripts quản lý toàn bộ workspace
@@ -138,7 +155,7 @@ R2_PUBLIC_BASE_URL=https://pub-xxxxxxxxxxxx.r2.dev
   pnpm --filter @midterm/mobile start --lan --port 8081
   ```
   - **Trên trình duyệt Web:** Truy cập `http://localhost:8081`
-  - **Trên điện thoại:** Mở ứng dụng **Expo Go** và quét mã QR trên Terminal hoặc ngay trong khung **Mã QR Expo** ở thanh bên trái giao diện Web.
+  - **Trên điện thoại:** Mở ứng dụng **Expo Go** và quét mã QR trên Terminal hoặc ngay trong khung **Mở trên Expo Go** ở thanh bên trái giao diện Web.
 
 ---
 
