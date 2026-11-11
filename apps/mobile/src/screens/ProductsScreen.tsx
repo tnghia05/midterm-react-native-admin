@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { api } from '../api';
@@ -18,9 +18,9 @@ type PriceRange = 'all' | 'under200' | 'mid' | 'over350';
 
 const SORTS: { key: Sort; label: string }[] = [
   { key: 'new', label: 'Mới nhất' },
-  { key: 'priceAsc', label: 'Giá tăng' },
-  { key: 'priceDesc', label: 'Giá giảm' },
-  { key: 'stock', label: 'Tồn kho ít' },
+  { key: 'priceAsc', label: 'Giá ↑' },
+  { key: 'priceDesc', label: 'Giá ↓' },
+  { key: 'stock', label: 'Tồn ít' },
   { key: 'valueDesc', label: 'Giá trị cao' },
 ];
 
@@ -38,7 +38,7 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
   const width = mobileFrame ? 390 : windowDim.width;
   const desktop = !mobileFrame && width >= 1024;
   const tablet = !mobileFrame && width >= 640;
-  const pad = desktop ? 44 : tablet ? 28 : 16;
+  const pad = desktop ? 44 : tablet ? 28 : 14;
   const gap = tablet ? 20 : 12;
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -233,7 +233,7 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
 
   const handleBulkImport = async (items: ProductDraft[]) => {
     await api.bulkCreate(token, items);
-    setToast(`Đã nhập ${items.length} sản phẩm vào MongoDB`);
+    setToast(`Đã nhập ${items.length} sản phẩm vào CSDL`);
     await load('refresh');
   };
 
@@ -246,31 +246,33 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
   const outPct = stats.total ? (stats.counts.out / stats.total) * 100 : 0;
 
   const header = (
-    <View style={{ gap: tablet ? space.lg : space.md, paddingBottom: space.lg }}>
-      <View style={[styles.heading, !tablet && styles.headingStack]}>
-        <View style={{ flex: 1, gap: 5 }}>
-          <SectionNote>{mobileFrame ? 'Chế độ Di động (Ý 3 · 390×844)' : 'Kho hàng của shop'}</SectionNote>
-          <Text accessibilityRole="header" style={[styles.h1, !tablet && styles.h1Small]}>Quản lý sản phẩm</Text>
-          <Text style={styles.lead}>Thêm, sửa, xóa, điều chỉnh nhanh tồn kho và đồng bộ ảnh Cloudflare R2.</Text>
+    <View style={{ gap: tablet ? space.lg : 12, paddingBottom: 14 }}>
+      {tablet ? (
+        <View style={styles.heading}>
+          <View style={{ flex: 1, gap: 5 }}>
+            <SectionNote>Kho hàng của shop</SectionNote>
+            <Text accessibilityRole="header" style={styles.h1}>Quản lý sản phẩm</Text>
+            <Text style={styles.lead}>Thêm, sửa, xóa, điều chỉnh nhanh tồn kho và đồng bộ ảnh Cloudflare R2.</Text>
+          </View>
+          <View style={styles.headingActions}>
+            <Button label="Di động (Ý 3)" variant="secondary" iconName="smartphone" onPress={() => setMobileModal(true)} compact />
+            <Button label="CSDL JSON" variant="secondary" iconName="database" onPress={() => setDataModal(true)} compact />
+            <Button label="Thêm sản phẩm" iconName="plus" onPress={() => setEditor({ open: true })} compact />
+          </View>
         </View>
-        <View style={styles.headingActions}>
-          <Button label="Di động (Ý 3)" variant="secondary" iconName="smartphone" onPress={() => setMobileModal(true)} compact />
-          <Button label="CSDL JSON" variant="secondary" iconName="database" onPress={() => setDataModal(true)} compact />
-          <Button label="Thêm sản phẩm" iconName="plus" onPress={() => setEditor({ open: true })} compact />
-        </View>
-      </View>
+      ) : null}
 
       <View style={styles.stats}>
         {[
-          ['Tổng sản phẩm', number.format(stats.total), 'mặt hàng đang bán'],
-          ['Tổng tồn kho', number.format(stats.units), 'đơn vị sản phẩm'],
-          ['Giá trị kho', money.format(stats.value), 'giá × số lượng'],
-          ['Cần nhập thêm', number.format(stats.low), 'sắp hết hoặc hết hàng'],
+          ['Sản phẩm', number.format(stats.total), 'mặt hàng'],
+          ['Tồn kho', number.format(stats.units), 'đơn vị'],
+          ['Giá trị kho', money.format(stats.value), 'tổng giá trị'],
+          ['Cần nhập', number.format(stats.low), 'sắp/hết hàng'],
         ].map(([label, value, note], i) => (
-          <View key={label} style={[styles.stat, { flexBasis: tablet ? '22%' : '46%' }, i === 3 && stats.low > 0 && styles.statWarn]}>
+          <View key={label} style={[styles.stat, !tablet && styles.statMobile, { flexBasis: tablet ? '22%' : '47%' }, i === 3 && stats.low > 0 && styles.statWarn]}>
             <Text style={styles.statLabel}>{label}</Text>
             <Text style={[styles.statValue, !tablet && styles.statValueSmall, i === 3 && stats.low > 0 && { color: colors.warning }]} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
-            <Text style={styles.statNote}>{note}</Text>
+            {tablet && <Text style={styles.statNote}>{note}</Text>}
           </View>
         ))}
       </View>
@@ -278,9 +280,9 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
       {stats.total > 0 && (
         <View style={styles.healthCard}>
           <View style={styles.healthHeader}>
-            <Text style={styles.healthTitle}>Phân bố tình trạng kho hàng</Text>
+            <Text style={styles.healthTitle}>Tình trạng kho</Text>
             <Text style={styles.healthLegend}>
-              <Text style={{ color: colors.success }}>● Còn hàng ({stats.counts.ok})</Text>   <Text style={{ color: colors.warning }}>● Sắp hết ({stats.counts.low})</Text>   <Text style={{ color: colors.danger }}>● Hết hàng ({stats.counts.out})</Text>
+              <Text style={{ color: colors.success }}>● Còn ({stats.counts.ok})</Text>  <Text style={{ color: colors.warning }}>● Sắp hết ({stats.counts.low})</Text>  <Text style={{ color: colors.danger }}>● Hết ({stats.counts.out})</Text>
             </Text>
           </View>
           <View style={styles.healthTrack}>
@@ -291,47 +293,89 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
         </View>
       )}
 
-      <View style={[styles.toolbar, !tablet && styles.toolbarStack]}>
-        <View style={styles.search}>
-          <Feather name="search" size={16} color="#928B9C" />
-          <TextInput value={query} onChangeText={setQuery} placeholder="Tìm theo tên sản phẩm…" placeholderTextColor="#A39DAD" style={styles.searchInput} accessibilityLabel="Tìm sản phẩm" returnKeyType="search" />
-          {!!query && <IconButton name="x" label="Xóa tìm kiếm" onPress={() => setQuery('')} tone="plain" size={28} />}
-        </View>
-        <View style={styles.sortRow}>
-          {SORTS.map((s) => <Chip key={s.key} label={s.label} selected={sort === s.key} onPress={() => setSort(s.key)} />)}
-        </View>
-      </View>
+      {tablet ? (
+        <>
+          <View style={styles.toolbar}>
+            <View style={styles.search}>
+              <Feather name="search" size={16} color="#928B9C" />
+              <TextInput value={query} onChangeText={setQuery} placeholder="Tìm theo tên sản phẩm…" placeholderTextColor="#A39DAD" style={styles.searchInput} accessibilityLabel="Tìm sản phẩm" returnKeyType="search" />
+              {!!query && <IconButton name="x" label="Xóa tìm kiếm" onPress={() => setQuery('')} tone="plain" size={28} />}
+            </View>
+            <View style={styles.sortRow}>
+              {SORTS.map((s) => <Chip key={s.key} label={s.label} selected={sort === s.key} onPress={() => setSort(s.key)} />)}
+            </View>
+          </View>
 
-      <View style={styles.filterRow}>
-        {([['all', 'Tất cả'], ['ok', 'Còn hàng'], ['low', 'Sắp hết'], ['out', 'Hết hàng']] as [Filter, string][]).map(([key, label]) => (
-          <Chip key={key} label={label} count={stats.counts[key]} selected={filter === key} onPress={() => setFilter(key)} />
-        ))}
-        <View style={styles.dividerDot} />
-        {PRICE_RANGES.map((r) => (
-          <Chip key={r.key} label={r.label} selected={priceRange === r.key} onPress={() => setPriceRange(r.key)} />
-        ))}
-        <View style={styles.rightControls}>
-          <Chip
-            label={selectMode ? `Đang chọn (${selectedIds.length})` : 'Chọn nhiều'}
-            selected={selectMode}
-            onPress={() => { setSelectMode((v) => !v); setSelectedIds([]); }}
-          />
-          <IconButton name={viewMode === 'grid' ? 'list' : 'grid'} label="Đổi kiểu hiển thị" onPress={() => setViewMode((m) => (m === 'grid' ? 'list' : 'grid'))} tone="plain" size={36} />
+          <View style={styles.filterRow}>
+            {([['all', 'Tất cả'], ['ok', 'Còn hàng'], ['low', 'Sắp hết'], ['out', 'Hết hàng']] as [Filter, string][]).map(([key, label]) => (
+              <Chip key={key} label={label} count={stats.counts[key]} selected={filter === key} onPress={() => setFilter(key)} />
+            ))}
+            <View style={styles.dividerDot} />
+            {PRICE_RANGES.map((r) => (
+              <Chip key={r.key} label={r.label} selected={priceRange === r.key} onPress={() => setPriceRange(r.key)} />
+            ))}
+            <View style={styles.rightControls}>
+              <Chip
+                label={selectMode ? `Đang chọn (${selectedIds.length})` : 'Chọn nhiều'}
+                selected={selectMode}
+                onPress={() => { setSelectMode((v) => !v); setSelectedIds([]); }}
+              />
+              <IconButton name={viewMode === 'grid' ? 'list' : 'grid'} label="Đổi kiểu hiển thị" onPress={() => setViewMode((m) => (m === 'grid' ? 'list' : 'grid'))} tone="plain" size={36} />
+            </View>
+          </View>
+        </>
+      ) : (
+        <View style={{ gap: 10 }}>
+          <View style={styles.mobileSearchRow}>
+            <View style={[styles.search, { maxWidth: '100%' }]}>
+              <Feather name="search" size={16} color="#928B9C" />
+              <TextInput value={query} onChangeText={setQuery} placeholder="Tìm sản phẩm…" placeholderTextColor="#A39DAD" style={styles.searchInput} accessibilityLabel="Tìm sản phẩm" returnKeyType="search" />
+              {!!query && <IconButton name="x" label="Xóa tìm kiếm" onPress={() => setQuery('')} tone="plain" size={26} />}
+            </View>
+            <IconButton
+              name={selectMode ? 'check-square' : 'square'}
+              label="Chọn nhiều sản phẩm"
+              onPress={() => { setSelectMode((v) => !v); setSelectedIds([]); }}
+              tone={selectMode ? 'default' : 'plain'}
+              size={40}
+            />
+            <IconButton
+              name={viewMode === 'grid' ? 'list' : 'grid'}
+              label="Đổi kiểu hiển thị"
+              onPress={() => setViewMode((m) => (m === 'grid' ? 'list' : 'grid'))}
+              tone="plain"
+              size={40}
+            />
+          </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mobileChipScroll}>
+            {([['all', 'Tất cả'], ['ok', 'Còn hàng'], ['low', 'Sắp hết'], ['out', 'Hết hàng']] as [Filter, string][]).map(([key, label]) => (
+              <Chip key={key} label={label} count={stats.counts[key]} selected={filter === key} onPress={() => setFilter(key)} />
+            ))}
+            <View style={styles.dividerDot} />
+            {SORTS.map((s) => (
+              <Chip key={s.key} label={s.label} selected={sort === s.key} onPress={() => setSort(s.key)} />
+            ))}
+            <View style={styles.dividerDot} />
+            {PRICE_RANGES.filter((r) => r.key !== 'all').map((r) => (
+              <Chip key={r.key} label={r.label} selected={priceRange === r.key} onPress={() => setPriceRange((curr) => (curr === r.key ? 'all' : r.key))} />
+            ))}
+          </ScrollView>
         </View>
-      </View>
+      )}
 
       {selectMode && (
         <View style={styles.bulkBar}>
-          <Text style={styles.bulkTitle}>Đã chọn {selectedIds.length}/{visible.length} sản phẩm</Text>
+          <Text style={styles.bulkTitle}>Đã chọn {selectedIds.length}/{visible.length}</Text>
           <View style={styles.bulkActions}>
             <Chip
-              label={selectedIds.length === visible.length ? 'Bỏ chọn hết' : 'Chọn tất cả'}
+              label={selectedIds.length === visible.length ? 'Bỏ chọn' : 'Tất cả'}
               selected={false}
               onPress={() => setSelectedIds(selectedIds.length === visible.length ? [] : visible.map((p) => p._id))}
             />
-            <Button label="+10 tồn kho" variant="secondary" onPress={() => runBulkRestock(10)} disabled={!selectedIds.length || bulkBusy} compact />
-            <Button label="Giảm giá 10%" variant="secondary" onPress={() => runBulkDiscount(10)} disabled={!selectedIds.length || bulkBusy} compact />
-            <Button label="Xóa mục chọn" variant="danger" iconName="trash-2" onPress={runBulkDelete} disabled={!selectedIds.length || bulkBusy} loading={bulkBusy} compact />
+            <Button label="+10 kho" variant="secondary" onPress={() => runBulkRestock(10)} disabled={!selectedIds.length || bulkBusy} compact />
+            <Button label="-10% giá" variant="secondary" onPress={() => runBulkDiscount(10)} disabled={!selectedIds.length || bulkBusy} compact />
+            <Button label="Xóa" variant="danger" iconName="trash-2" onPress={runBulkDelete} disabled={!selectedIds.length || bulkBusy} loading={bulkBusy} compact />
           </View>
         </View>
       )}
@@ -370,24 +414,33 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
           </Pressable>
         </View>
       )}
-      <View style={styles.banner}>
-        <Text style={styles.bannerText} numberOfLines={1}>
-          {mobileFrame ? 'Giao diện Di động (Ý 3) · Chụp/Chọn ảnh & Xem chi tiết' : 'Kênh người bán · Dữ liệu lưu trên MongoDB Atlas, ảnh trên Cloudflare R2'}
-        </Text>
-      </View>
+      {tablet && (
+        <View style={styles.banner}>
+          <Text style={styles.bannerText} numberOfLines={1}>
+            Kênh người bán · Dữ liệu lưu trên MongoDB Atlas, ảnh trên Cloudflare R2
+          </Text>
+        </View>
+      )}
       <View style={styles.siteHeader}>
         <View style={[styles.headerInner, { paddingHorizontal: pad }]}>
           <Brand size={tablet ? 34 : 26} />
-          <Text style={styles.headerLabel}>{mobileFrame ? 'Mobile Admin' : 'Kênh người bán'}</Text>
+          <Text style={styles.headerLabel}>{tablet ? 'Kênh người bán' : `${stats.total} SP`}</Text>
           <View style={{ flex: 1 }} />
+          {!tablet && (
+            <IconButton name="database" label="Công cụ CSDL JSON" onPress={() => setDataModal(true)} tone="plain" size={36} />
+          )}
           {Platform.OS === 'web' && (
             <Pressable onPress={() => setMobileFrame((v) => !v)} style={styles.frameToggle}>
               <Feather name={mobileFrame ? 'monitor' : 'smartphone'} size={14} color={colors.purple} />
-              <Text style={styles.frameToggleText}>{mobileFrame ? 'Màn hình Web' : 'Khung Di động'}</Text>
+              <Text style={styles.frameToggleText}>{mobileFrame ? 'Web' : 'Khung Di động'}</Text>
             </Pressable>
           )}
           {tablet && <Text style={styles.headerUser}>admin@example.com</Text>}
-          <Button label={tablet ? 'Đăng xuất' : ''} variant="ghost" iconName="log-out" onPress={onLogout} compact />
+          {tablet ? (
+            <Button label="Đăng xuất" variant="ghost" iconName="log-out" onPress={onLogout} compact />
+          ) : (
+            <IconButton name="log-out" label="Đăng xuất" onPress={onLogout} tone="plain" size={36} />
+          )}
         </View>
       </View>
 
@@ -414,7 +467,7 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
           keyExtractor={(item) => item._id}
           numColumns={columns}
           columnWrapperStyle={columns > 1 ? { gap } : undefined}
-          contentContainerStyle={{ paddingTop: desktop ? 32 : 18, paddingBottom: 80 }}
+          contentContainerStyle={{ paddingTop: desktop ? 32 : 12, paddingBottom: 110 }}
           ListHeaderComponent={header}
           ListEmptyComponent={empty}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load('refresh')} tintColor={colors.purple} colors={[colors.purple]} />}
@@ -476,10 +529,10 @@ const styles = StyleSheet.create({
   banner: { backgroundColor: colors.banner, paddingVertical: 8, paddingHorizontal: 16 },
   bannerText: { fontFamily: font.regular, fontSize: 11, color: colors.bannerText, textAlign: 'center' },
   siteHeader: { borderBottomWidth: 1, borderBottomColor: colors.line, backgroundColor: colors.surface },
-  headerInner: { width: '100%', maxWidth: 1320, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 12 },
-  headerLabel: { fontFamily: font.regular, fontSize: 13, color: colors.muted, borderLeftWidth: 1, borderLeftColor: colors.line, paddingLeft: space.md },
-  frameToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.lilac, paddingHorizontal: 11, paddingVertical: 7, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.lineStrong },
-  frameToggleText: { fontFamily: font.semibold, fontSize: 12, color: colors.purple },
+  headerInner: { width: '100%', maxWidth: 1320, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  headerLabel: { fontFamily: font.medium, fontSize: 12, color: colors.muted, borderLeftWidth: 1, borderLeftColor: colors.line, paddingLeft: 10 },
+  frameToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.lilac, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.lineStrong },
+  frameToggleText: { fontFamily: font.semibold, fontSize: 11, color: colors.purple },
   headerUser: { fontFamily: font.regular, fontSize: 12, color: colors.muted },
   layout: { flex: 1, flexDirection: 'row', gap: 40, width: '100%', maxWidth: 1320, alignSelf: 'center' },
   sidebar: { width: 210, paddingTop: 32, paddingRight: 25, borderRightWidth: 1, borderRightColor: colors.line },
@@ -496,34 +549,34 @@ const styles = StyleSheet.create({
   sideNote: { marginTop: 26, backgroundColor: '#F6F4F8', padding: 14, borderRadius: 7 },
   sideNoteText: { fontFamily: font.regular, fontSize: 11, lineHeight: 18, color: '#81758D' },
   heading: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md },
-  headingStack: { flexDirection: 'column', alignItems: 'stretch' },
   headingActions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   h1: { fontFamily: font.bold, fontSize: 28, letterSpacing: -0.8, color: colors.ink },
-  h1Small: { fontSize: 22 },
   lead: { fontFamily: font.regular, fontSize: 13, color: colors.muted, lineHeight: 20 },
-  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   stat: { flexGrow: 1, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: 14, gap: 4, backgroundColor: colors.surface },
+  statMobile: { paddingVertical: 10, paddingHorizontal: 12, gap: 2, backgroundColor: colors.canvas },
   statWarn: { backgroundColor: '#FCFAF6', borderColor: '#EDE3D2' },
   statLabel: { fontFamily: font.medium, fontSize: 11, color: colors.muted },
   statValue: { fontFamily: font.semibold, fontSize: 24, color: colors.ink, letterSpacing: -0.6 },
-  statValueSmall: { fontSize: 18 },
+  statValueSmall: { fontSize: 17 },
   statNote: { fontFamily: font.regular, fontSize: 10, color: '#928B9C' },
-  healthCard: { backgroundColor: colors.canvas, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, padding: 12, gap: 8 },
-  healthHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
+  healthCard: { backgroundColor: colors.canvas, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, padding: 10, gap: 6 },
+  healthHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 },
   healthTitle: { fontFamily: font.medium, fontSize: 11, color: colors.ink },
-  healthLegend: { fontFamily: font.medium, fontSize: 11 },
-  healthTrack: { height: 7, borderRadius: 4, backgroundColor: colors.line, flexDirection: 'row', overflow: 'hidden' },
+  healthLegend: { fontFamily: font.medium, fontSize: 10 },
+  healthTrack: { height: 6, borderRadius: 3, backgroundColor: colors.line, flexDirection: 'row', overflow: 'hidden' },
   toolbar: { flexDirection: 'row', alignItems: 'center', gap: space.md, justifyContent: 'space-between' },
-  toolbarStack: { flexDirection: 'column', alignItems: 'stretch', gap: space.sm },
-  search: { flex: 1, maxWidth: 360, minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 9, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, paddingLeft: 13, paddingRight: 6 },
+  mobileSearchRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  mobileChipScroll: { gap: 6, alignItems: 'center', paddingRight: 8 },
+  search: { flex: 1, maxWidth: 360, minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, paddingLeft: 12, paddingRight: 6, backgroundColor: colors.canvas },
   searchInput: { flex: 1, minWidth: 0, fontFamily: font.regular, fontSize: 13, color: colors.ink, paddingVertical: 8, outlineStyle: 'none' } as never,
   sortRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   filterRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.md },
   dividerDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.lineStrong, marginHorizontal: 2 },
   rightControls: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 8 },
-  bulkBar: { backgroundColor: colors.lilac, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.lineStrong, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: space.sm },
-  bulkTitle: { fontFamily: font.semibold, fontSize: 13, color: colors.purple },
-  bulkActions: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  bulkBar: { backgroundColor: colors.lilac, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.lineStrong, padding: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 },
+  bulkTitle: { fontFamily: font.semibold, fontSize: 12, color: colors.purple },
+  bulkActions: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   alert: { flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: colors.dangerSoft, padding: space.md, borderRadius: radius.sm },
   alertText: { flex: 1, fontFamily: font.medium, fontSize: 13, color: colors.danger },
   alertAction: { fontFamily: font.semibold, fontSize: 13, color: colors.purple, textDecorationLine: 'underline' },

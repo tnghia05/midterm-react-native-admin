@@ -1,5 +1,11 @@
 [
   {
+    "name": "Chana gaf",
+    "price": 300000,
+    "soluong": 10,
+    "image": "https://pub-c33beeb43b3944d7908da05fd576eff9.r2.dev/products/1794384055728-7ac82e8b.jpg"
+  },
+  {
     "name": "de giua ki",
     "price": 19213123,
     "soluong": 1,
@@ -7,13 +13,13 @@
   },
   {
     "name": "Serum Smooth Daily",
-    "price": 299000,
+    "price": 269000,
     "soluong": 9,
     "image": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=900"
   },
   {
     "name": "Kem dưỡng ẩm Soft Care",
-    "price": 239000,
+    "price": 215000,
     "soluong": 18,
     "image": "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=900"
   }

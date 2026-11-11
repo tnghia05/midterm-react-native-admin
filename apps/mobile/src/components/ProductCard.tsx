@@ -49,28 +49,30 @@ export const ProductCard = memo(function ProductCard({
         </Pressable>
         <Pressable onPress={handlePress} style={styles.rowBody}>
           <Text numberOfLines={1} style={styles.rowTitle}>{product.name}</Text>
-          <Text style={styles.rowPrice}>{money.format(product.price)}</Text>
+          <Text numberOfLines={1} style={styles.rowPrice}>{money.format(product.price)}</Text>
           <View style={styles.rowMeta}>
             <View style={[styles.inlineBadge, { backgroundColor: meta.bg }]}>
               <View style={[styles.dot, { backgroundColor: meta.fg }]} />
               <Text style={[styles.badgeText, { color: meta.fg }]}>{meta.label}</Text>
             </View>
-            <Text style={styles.meta}>Giá trị kho: <Text style={styles.metaStrong}>{money.format(product.price * product.soluong)}</Text></Text>
+            <Text style={styles.meta}>Tồn: <Text style={styles.metaStrong}>{number.format(product.soluong)}</Text></Text>
           </View>
         </Pressable>
-        <View style={styles.stepper}>
-          <Pressable accessibilityLabel="Giảm 1" disabled={product.soluong <= 0} onPress={() => onAdjustStock(product, -1)} style={[styles.stepBtn, product.soluong <= 0 && styles.stepDisabled]}>
-            <Feather name="minus" size={13} color={colors.ink} />
-          </Pressable>
-          <Text style={styles.stepVal}>{number.format(product.soluong)}</Text>
-          <Pressable accessibilityLabel="Tăng 1" onPress={() => onAdjustStock(product, 1)} style={styles.stepBtn}>
-            <Feather name="plus" size={13} color={colors.ink} />
-          </Pressable>
-        </View>
-        <View style={styles.actions}>
-          <IconButton name="copy" label={`Nhân bản ${product.name}`} onPress={() => onDuplicate(product)} size={34} />
-          <IconButton name="edit-2" label={`Sửa ${product.name}`} onPress={() => onEdit(product)} size={34} />
-          <IconButton name="trash-2" label={`Xóa ${product.name}`} onPress={() => onDelete(product)} tone="danger" size={34} />
+        <View style={styles.rightCol}>
+          <View style={styles.stepper}>
+            <Pressable accessibilityLabel="Giảm 1" disabled={product.soluong <= 0} onPress={() => onAdjustStock(product, -1)} style={[styles.stepBtn, product.soluong <= 0 && styles.stepDisabled]}>
+              <Feather name="minus" size={13} color={colors.ink} />
+            </Pressable>
+            <Text style={styles.stepVal}>{number.format(product.soluong)}</Text>
+            <Pressable accessibilityLabel="Tăng 1" onPress={() => onAdjustStock(product, 1)} style={styles.stepBtn}>
+              <Feather name="plus" size={13} color={colors.ink} />
+            </Pressable>
+          </View>
+          <View style={styles.actions}>
+            <IconButton name="copy" label={`Nhân bản ${product.name}`} onPress={() => onDuplicate(product)} size={32} />
+            <IconButton name="edit-2" label={`Sửa ${product.name}`} onPress={() => onEdit(product)} size={32} />
+            <IconButton name="trash-2" label={`Xóa ${product.name}`} onPress={() => onDelete(product)} tone="danger" size={32} />
+          </View>
         </View>
       </View>
     );
@@ -95,23 +97,34 @@ export const ProductCard = memo(function ProductCard({
           </View>
         )}
       </Pressable>
+
       <View style={styles.info}>
-        <View style={styles.stockRow}>
-          <Text style={styles.meta}>Tồn kho: <Text style={styles.metaStrong}>{number.format(product.soluong)}</Text></Text>
-          <View style={styles.miniStepper}>
-            <Pressable accessibilityLabel={`Giảm số lượng ${product.name}`} hitSlop={6} disabled={product.soluong <= 0} onPress={() => onAdjustStock(product, -1)} style={[styles.miniStepBtn, product.soluong <= 0 && styles.stepDisabled]}>
-              <Feather name="minus" size={11} color={colors.ink} />
+        <Text numberOfLines={2} style={styles.title} onPress={handlePress}>{product.name}</Text>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={styles.price}>{money.format(product.price)}</Text>
+
+        <View style={styles.footerRow}>
+          <View style={styles.compactStepper}>
+            <Pressable
+              accessibilityLabel={`Giảm số lượng ${product.name}`}
+              hitSlop={6}
+              disabled={product.soluong <= 0}
+              onPress={() => onAdjustStock(product, -1)}
+              style={[styles.compactStepBtn, product.soluong <= 0 && styles.stepDisabled]}
+            >
+              <Feather name="minus" size={12} color={colors.ink} />
             </Pressable>
-            <Pressable accessibilityLabel={`Tăng số lượng ${product.name}`} hitSlop={6} onPress={() => onAdjustStock(product, 1)} style={styles.miniStepBtn}>
-              <Feather name="plus" size={11} color={colors.ink} />
+            <Text style={styles.compactStepText}>{number.format(product.soluong)}</Text>
+            <Pressable
+              accessibilityLabel={`Tăng số lượng ${product.name}`}
+              hitSlop={6}
+              onPress={() => onAdjustStock(product, 1)}
+              style={styles.compactStepBtn}
+            >
+              <Feather name="plus" size={12} color={colors.ink} />
             </Pressable>
           </View>
-        </View>
-        <Text numberOfLines={2} style={styles.title} onPress={handlePress}>{product.name}</Text>
-        <View style={styles.bottom}>
-          <Text style={styles.price}>{money.format(product.price)}</Text>
+
           <View style={styles.actions}>
-            <IconButton name="copy" label={`Nhân bản ${product.name}`} onPress={() => onDuplicate(product)} size={32} />
             <IconButton name="edit-2" label={`Sửa ${product.name}`} onPress={() => onEdit(product)} size={32} />
             <IconButton name="trash-2" label={`Xóa ${product.name}`} onPress={() => onDelete(product)} tone="danger" size={32} />
           </View>
@@ -122,37 +135,45 @@ export const ProductCard = memo(function ProductCard({
 });
 
 const styles = StyleSheet.create({
-  card: { marginBottom: space.xl, borderRadius: radius.md, padding: 4 },
-  cardSelectedGrid: { backgroundColor: colors.lilac, outlineWidth: 2, outlineColor: colors.purple } as never,
-  art: { aspectRatio: 1.05, borderRadius: radius.md, overflow: 'hidden', backgroundColor: '#F8ECEF' },
+  card: {
+    marginBottom: 14,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+    overflow: 'hidden',
+  },
+  cardSelectedGrid: { borderColor: colors.purple, borderWidth: 2, backgroundColor: colors.lilac },
+  art: { aspectRatio: 1, backgroundColor: '#F8ECEF', overflow: 'hidden' },
   artActive: { opacity: 0.92 },
   image: { width: '100%', height: '100%' },
-  badge: { position: 'absolute', top: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 4 },
-  inlineBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+  badge: { position: 'absolute', top: 8, left: 8, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  inlineBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 4 },
   dot: { width: 6, height: 6, borderRadius: 3 },
   badgeText: { fontFamily: font.semibold, fontSize: 10 },
-  cornerCheck: { position: 'absolute', top: 10, right: 10, width: 24, height: 24, borderRadius: 6, borderWidth: 1.5, borderColor: colors.purple, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  info: { paddingTop: 12, gap: 6 },
-  stockRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cornerCheck: { position: 'absolute', top: 8, right: 8, width: 24, height: 24, borderRadius: 6, borderWidth: 1.5, borderColor: colors.purple, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  info: { padding: 10, gap: 6 },
+  title: { fontFamily: font.semibold, fontSize: 14, lineHeight: 19, color: colors.ink, minHeight: 38 },
+  price: { fontFamily: font.bold, fontSize: 15, color: colors.purple },
+  footerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.line },
+  compactStepper: { flexDirection: 'row', alignItems: 'center', borderRadius: 6, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.canvas, height: 30 },
+  compactStepBtn: { width: 24, height: '100%', alignItems: 'center', justifyContent: 'center' },
+  compactStepText: { minWidth: 24, textAlign: 'center', fontFamily: font.semibold, fontSize: 12, color: colors.ink, paddingHorizontal: 2 },
   meta: { fontFamily: font.regular, fontSize: 11, color: colors.muted },
   metaStrong: { fontFamily: font.semibold, color: colors.ink },
-  miniStepper: { flexDirection: 'row', gap: 4 },
-  miniStepBtn: { width: 22, height: 22, borderRadius: 5, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  title: { fontFamily: font.semibold, fontSize: 15, lineHeight: 22, color: colors.ink, minHeight: 44 },
-  bottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.xs, marginTop: 2 },
-  price: { flexShrink: 1, fontFamily: font.semibold, fontSize: 15, color: colors.purple },
   actions: { flexDirection: 'row', gap: 5 },
-  rowCard: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: 12, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, marginBottom: 10, flexWrap: 'wrap' },
+  rowCard: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: 10, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, marginBottom: 10 },
   cardSelected: { borderColor: colors.purple, backgroundColor: colors.lilac },
   checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.purple, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   checkboxChecked: { backgroundColor: colors.purple, borderColor: colors.purple },
-  rowThumbWrap: { width: 68, height: 68, borderRadius: radius.sm, overflow: 'hidden', backgroundColor: '#F8ECEF' },
-  rowBody: { flex: 1, minWidth: 150, gap: 4 },
-  rowTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.ink },
-  rowPrice: { fontFamily: font.semibold, fontSize: 14, color: colors.purple },
-  rowMeta: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
-  stepper: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.lineStrong, borderRadius: radius.sm, height: 34, backgroundColor: colors.surface },
-  stepBtn: { width: 30, height: '100%', alignItems: 'center', justifyContent: 'center' },
+  rowThumbWrap: { width: 64, height: 64, borderRadius: radius.sm, overflow: 'hidden', backgroundColor: '#F8ECEF' },
+  rowBody: { flex: 1, minWidth: 110, gap: 3 },
+  rowTitle: { fontFamily: font.semibold, fontSize: 14, color: colors.ink },
+  rowPrice: { fontFamily: font.bold, fontSize: 14, color: colors.purple },
+  rowMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 2 },
+  rightCol: { alignItems: 'flex-end', gap: 6 },
+  stepper: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.lineStrong, borderRadius: radius.sm, height: 30, backgroundColor: colors.canvas },
+  stepBtn: { width: 26, height: '100%', alignItems: 'center', justifyContent: 'center' },
   stepDisabled: { opacity: 0.35 },
-  stepVal: { minWidth: 32, textAlign: 'center', fontFamily: font.semibold, fontSize: 12, color: colors.ink },
+  stepVal: { minWidth: 26, textAlign: 'center', fontFamily: font.semibold, fontSize: 12, color: colors.ink },
 });

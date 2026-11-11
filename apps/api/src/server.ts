@@ -195,9 +195,10 @@ app.patch('/api/products/:id', requireAuth, async (request, response, next) => {
         mongoConnected = false;
       }
     }
-    const idx = memoryProducts.findIndex((p) => p._id === request.params.id);
+    const id = String(request.params.id);
+    const idx = memoryProducts.findIndex((p) => p._id === id);
     if (idx === -1) return response.status(404).json({ message: 'Không tìm thấy sản phẩm' });
-    const updated: StoredProduct = { _id: request.params.id, ...input };
+    const updated: StoredProduct = { _id: id, ...input };
     memoryProducts[idx] = updated;
     await saveLocalFile(memoryProducts);
     response.json(updated);
