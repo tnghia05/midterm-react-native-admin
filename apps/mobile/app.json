@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Quản lý sản phẩm",
+    "name": "mây. Quản lý sản phẩm",
     "slug": "midterm-product-admin",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,7 +12,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Cho phép chọn ảnh sản phẩm để hiển thị trong ứng dụng."
+          "photosPermission": "Cho phép chọn ảnh sản phẩm từ thư viện điện thoại.",
+          "cameraPermission": "Cho phép chụp ảnh sản phẩm trực tiếp bằng camera điện thoại."
         }
       ],
       "expo-font"

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { timingSafeEqual } from 'node:crypto';
 import dns from 'node:dns';
 import { readFile, writeFile } from 'node:fs/promises';
+import { networkInterfaces } from 'node:os';
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import jwt from 'jsonwebtoken';
@@ -39,7 +40,37 @@ function requireAuth(request: Request, response: Response, next: NextFunction) {
   catch { response.status(401).json({ message: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn' }); }
 }
 
-app.get('/api/health', (_request, response) => response.json({ status: 'ok', database: mongoose.connection.name, r2: isR2Configured() }));
+function detectLanIps(): string[] {
+  const nets = networkInterfaces();
+  const ips: string[] = [];
+  for (const [name, list] of Object.entries(nets)) {
+    if (/loopback|vmware|vethernet|virtualbox|wsl/i.test(name)) continue;
+    for (const info of list ?? []) {
+      if (info.family === 'IPv4' && !info.internal && !info.address.startsWith('169.254.')) {
+        ips.push(info.address);
+      }
+    }
+  }
+  return ips.length ? ips : ['192.168.1.13'];
+}
+
+app.get('/api/health', (_request, response) => response.json({ status: 'ok', database: mongoose.connection.name, r2: isR2Configured(), lanIps: detectLanIps() }));
+
+app.post('/api/products/bulk', requireAuth, async (request, response, next) => {
+  try {
+    if (!Array.isArray(request.body) || request.body.length === 0 || request.body.length > 50) {
+      return response.status(400).json({ message: 'Cần truyền mảng 1–50 sản phẩm hợp lệ' });
+    }
+    const items = await Promise.all(request.body.map(async (raw) => {
+      const parsed = parseProductInput(raw);
+      parsed.image = await uploadDataImageToR2(parsed.image);
+      return parsed;
+    }));
+    const created = await Product.insertMany(items);
+    await syncExportFile();
+    response.status(201).json(created);
+  } catch (error) { next(error); }
+});
 
 app.post('/api/auth/login', (request, response) => {
   const email = typeof request.body?.email === 'string' ? request.body.email.trim().toLowerCase() : '';
