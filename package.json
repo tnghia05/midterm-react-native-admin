@@ -1,0 +1,13 @@
+{
+  "name": "midterm-react-native-admin",
+  "private": true,
+  "packageManager": "pnpm@12.4.0",
+  "scripts": {
+    "dev:api": "pnpm --filter @midterm/api dev",
+    "dev:mobile": "pnpm --filter @midterm/mobile start",
+    "web": "pnpm --filter @midterm/mobile web",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test"
+  }
+}

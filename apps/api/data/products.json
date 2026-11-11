@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Kem dưỡng ẩm Soft Care",
+    "price": 239000,
+    "soluong": 18,
+    "image": "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=900"
+  },
+  {
+    "name": "Serum Smooth Daily",
+    "price": 299000,
+    "soluong": 9,
+    "image": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=900"
+  }
+]
