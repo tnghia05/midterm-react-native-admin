@@ -61,14 +61,14 @@ export function DataToolsModal({
       a.download = 'products.json';
       a.click();
       URL.revokeObjectURL(url);
-      onNotify('Đã tải xuống file products.json (đúng 4 trường)');
+      onNotify('Đã tải xuống file products.json');
     }
   };
 
   const copyJson = async () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       await navigator.clipboard.writeText(cleanJson);
-      onNotify('Đã sao chép JSON vào bộ nhớ tạm');
+      onNotify('Đã sao chép dữ liệu JSON');
     }
   };
 
@@ -78,11 +78,11 @@ export function DataToolsModal({
     try {
       parsed = JSON.parse(importText);
     } catch {
-      setError('Cú pháp JSON không hợp lệ. Hãy kiểm tra dấu ngoặc hoặc dấu phẩy.');
+      setError('Cú pháp JSON không hợp lệ.');
       return;
     }
     if (!Array.isArray(parsed) || parsed.length === 0) {
-      setError('Dữ liệu nhập cần là một mảng JSON chứa ít nhất 1 sản phẩm.');
+      setError('Dữ liệu nhập cần là một mảng chứa ít nhất 1 sản phẩm.');
       return;
     }
     setBusy(true);
@@ -100,44 +100,35 @@ export function DataToolsModal({
     <Sheet
       visible={visible}
       onClose={onClose}
-      title="Công cụ Cơ sở dữ liệu JSON (Nộp bài & Nhập nhanh)"
-      subtitle="Đảm bảo đúng quy định đề bài: chỉ chứa 4 trường name, price, soluong, image"
-      maxWidth={780}
+      title="Nhập & Xuất dữ liệu sản phẩm"
+      subtitle="Sao lưu danh mục sản phẩm ra file JSON hoặc thêm nhanh theo lô"
+      maxWidth={740}
       footer={
         tab === 'export' ? (
           <>
-            <Button label="Sao chép JSON" variant="secondary" iconName="copy" onPress={copyJson} compact />
-            {Platform.OS === 'web' && <Button label="Tải file products.json" iconName="download" onPress={downloadJson} compact />}
+            <Button label="Sao chép" variant="secondary" iconName="copy" onPress={copyJson} compact />
+            {Platform.OS === 'web' && <Button label="Tải xuống products.json" iconName="download" onPress={downloadJson} compact />}
           </>
         ) : (
           <>
-            <Button label="Nạp mẫu 3 sản phẩm" variant="secondary" onPress={() => setImportText(JSON.stringify(PRESET_BATCH, null, 2))} compact />
-            <Button label="Nhập vào MongoDB" iconName="upload" onPress={runImport} loading={busy} compact />
+            <Button label="Điền dữ liệu mẫu" variant="secondary" onPress={() => setImportText(JSON.stringify(PRESET_BATCH, null, 2))} compact />
+            <Button label="Nhập sản phẩm" iconName="upload" onPress={runImport} loading={busy} compact />
           </>
         )
       }
     >
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.tabs}>
-          <Chip label={`Xuất file CSDL (${products.length} SP)`} selected={tab === 'export'} onPress={() => setTab('export')} />
-          <Chip label="Nhập hàng loạt (Bulk Import)" selected={tab === 'import'} onPress={() => setTab('import')} />
+          <Chip label={`Xuất dữ liệu (${products.length})`} selected={tab === 'export'} onPress={() => setTab('export')} />
+          <Chip label="Nhập theo lô" selected={tab === 'import'} onPress={() => setTab('import')} />
         </View>
 
         {tab === 'export' ? (
           <View style={styles.section}>
-            <View style={styles.infoBanner}>
-              <Feather name="check-circle" size={16} color={colors.success} />
-              <Text style={styles.infoText}>
-                File <Text style={styles.bold}>apps/api/data/products.json</Text> trên máy chủ luôn tự động đồng bộ mỗi khi bạn thêm/sửa/xóa. Bạn cũng có thể tải trực tiếp bản xuất dưới đây để nộp kèm báo cáo.
-              </Text>
-            </View>
             <TextInput value={cleanJson} editable={false} multiline style={styles.codeBox} />
           </View>
         ) : (
           <View style={styles.section}>
-            <Text style={styles.helper}>
-              Dán mảng JSON các sản phẩm gồm 4 trường <Text style={styles.bold}>name, price, soluong, image</Text>. Ảnh dạng base64 sẽ tự động được đẩy lên Cloudflare R2.
-            </Text>
             <TextInput value={importText} onChangeText={setImportText} multiline style={styles.codeBox} />
             {!!error && (
               <View style={styles.errorBox}>
@@ -172,7 +163,7 @@ export function MobileConnectModal({
     api.health().then((info) => {
       if (info.lanIps?.length) {
         setLanIps(info.lanIps);
-        setSelectedIp(info.lanIps[0] ?? '192.168.1.13');
+        setSelectedIp(info.lanIps[0] ?? '172.26.29.75');
       }
     }).catch(() => undefined);
   }, [visible]);
@@ -184,21 +175,21 @@ export function MobileConnectModal({
     <Sheet
       visible={visible}
       onClose={onClose}
-      title="Nền tảng Di động — Ý 3 (0.5 điểm)"
-      subtitle="Nhập hình ảnh từ Camera/Thư viện điện thoại và hiển thị thông tin sản phẩm"
-      maxWidth={680}
+      title="Ứng dụng Di động"
+      subtitle="Quét mã QR để quản lý sản phẩm và chụp ảnh trực tiếp trên điện thoại"
+      maxWidth={640}
       footer={
         <>
           {Platform.OS === 'web' && (
             <Button
-              label={mobileFrame ? 'Thoát Khung Điện thoại' : 'Bật Khung Điện thoại trên Web'}
+              label={mobileFrame ? 'Chế độ Màn hình rộng' : 'Xem giao diện Di động'}
               variant="secondary"
               iconName="smartphone"
               onPress={() => { onToggleMobileFrame(); onClose(); }}
               compact
             />
           )}
-          <Button label="Đã hiểu" onPress={onClose} compact />
+          <Button label="Đóng" onPress={onClose} compact />
         </>
       }
     >
@@ -209,28 +200,27 @@ export function MobileConnectModal({
             <Text style={styles.qrUrl}>{targetUrl}</Text>
           </View>
           <View style={styles.qrSteps}>
-            <Text style={styles.stepHeading}>Cách 1: Mở trực tiếp trên điện thoại thật</Text>
+            <Text style={styles.stepHeading}>Mở trên điện thoại</Text>
             <View style={styles.tabs}>
-              <Chip label="Quét bằng Expo Go" selected={mode === 'expo'} onPress={() => setMode('expo')} />
-              <Chip label="Trình duyệt Điện thoại" selected={mode === 'web'} onPress={() => setMode('web')} />
+              <Chip label="Ứng dụng Expo Go" selected={mode === 'expo'} onPress={() => setMode('expo')} />
+              <Chip label="Trình duyệt Web" selected={mode === 'web'} onPress={() => setMode('web')} />
             </View>
-            <Text style={styles.ipLabel}>Chọn địa chỉ IP mạng LAN của máy tính:</Text>
-            <View style={styles.tabs}>
-              {lanIps.map((ip) => (
-                <Chip key={ip} label={ip} selected={selectedIp === ip} onPress={() => setSelectedIp(ip)} />
-              ))}
-            </View>
+            {lanIps.length > 1 && (
+              <View style={styles.tabs}>
+                {lanIps.map((ip) => (
+                  <Chip key={ip} label={ip} selected={selectedIp === ip} onPress={() => setSelectedIp(ip)} />
+                ))}
+              </View>
+            )}
             <Text style={styles.helper}>
-              1. Điện thoại và máy tính kết nối cùng mạng Wi‑Fi.{'\n'}
-              2. Quét mã QR bên cạnh bằng ứng dụng <Text style={styles.bold}>Expo Go</Text> (Android) hoặc Camera (iOS / Trình duyệt).{'\n'}
-              3. App tự động nhận diện IP máy chủ <Text style={styles.bold}>http://{selectedIp}:3001/api</Text>, cho phép chụp ảnh bằng Camera hoặc chọn ảnh từ Thư viện điện thoại để đẩy lên Cloudflare R2.
+              Kết nối điện thoại cùng mạng Wi‑Fi với máy tính, sau đó dùng ứng dụng <Text style={styles.bold}>Expo Go</Text> hoặc Camera để quét mã QR bên cạnh.
             </Text>
             {Platform.OS === 'web' && (
               <Pressable onPress={() => { onToggleMobileFrame(); onClose(); }} style={styles.simBox}>
                 <Feather name="smartphone" size={18} color={colors.purple} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.simTitle}>Cách 2: Bật khung mô phỏng Di động ngay tại đây</Text>
-                  <Text style={styles.simCopy}>Hiển thị giao diện chuẩn kích thước điện thoại (390×844) ngay trên màn hình để quay video demo cả Web lẫn Mobile.</Text>
+                  <Text style={styles.simTitle}>Chuyển sang bố cục Di động</Text>
+                  <Text style={styles.simCopy}>Thu gọn giao diện về kích thước điện thoại ngay trên trình duyệt.</Text>
                 </View>
               </Pressable>
             )}
@@ -245,8 +235,6 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: space.xl, paddingBottom: space.xl, gap: space.lg },
   tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   section: { gap: space.md },
-  infoBanner: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, backgroundColor: colors.successSoft, padding: space.md, borderRadius: radius.sm },
-  infoText: { flex: 1, fontFamily: font.regular, fontSize: 12, lineHeight: 19, color: colors.ink },
   bold: { fontFamily: font.semibold, color: colors.ink },
   helper: { fontFamily: font.regular, fontSize: 12, lineHeight: 20, color: colors.muted },
   codeBox: { fontFamily: Platform.select({ web: 'monospace', default: font.regular }), fontSize: 12, lineHeight: 19, color: colors.ink, backgroundColor: colors.canvas, borderWidth: 1, borderColor: colors.line, borderRadius: radius.sm, padding: space.md, minHeight: 230, textAlignVertical: 'top' },
@@ -254,11 +242,10 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, fontFamily: font.medium, fontSize: 12, color: colors.danger },
   qrLayout: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xl, alignItems: 'flex-start' },
   qrCard: { alignItems: 'center', backgroundColor: colors.canvas, padding: space.lg, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, gap: space.sm },
-  qrImage: { width: 200, height: 200, borderRadius: radius.sm, backgroundColor: colors.surface },
+  qrImage: { width: 190, height: 190, borderRadius: radius.sm, backgroundColor: colors.surface },
   qrUrl: { fontFamily: font.semibold, fontSize: 12, color: colors.purple },
-  qrSteps: { flex: 1, minWidth: 260, gap: space.sm },
+  qrSteps: { flex: 1, minWidth: 240, gap: space.sm },
   stepHeading: { fontFamily: font.semibold, fontSize: 15, color: colors.ink },
-  ipLabel: { fontFamily: font.medium, fontSize: 12, color: colors.ink, marginTop: 4 },
   simBox: { marginTop: space.sm, flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: colors.lilac, padding: space.md, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.lineStrong },
   simTitle: { fontFamily: font.semibold, fontSize: 13, color: colors.purple },
   simCopy: { fontFamily: font.regular, fontSize: 11, lineHeight: 17, color: colors.muted, marginTop: 2 },

@@ -1,5 +1,11 @@
 [
   {
+    "name": "Phùng Thanh Độ",
+    "price": 36363636,
+    "soluong": 2,
+    "image": "https://pub-c33beeb43b3944d7908da05fd576eff9.r2.dev/products/1794384798766-53d117c4.jpg"
+  },
+  {
     "name": "Chana gaf",
     "price": 300000,
     "soluong": 10,
@@ -8,7 +14,7 @@
   {
     "name": "de giua ki",
     "price": 19213123,
-    "soluong": 1,
+    "soluong": 2,
     "image": "https://pub-c33beeb43b3944d7908da05fd576eff9.r2.dev/products/1794382282979-88b02b3c.jpg"
   },
   {

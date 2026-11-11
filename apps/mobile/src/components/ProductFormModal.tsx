@@ -3,7 +3,7 @@ import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDime
 import * as ImagePicker from 'expo-image-picker';
 import { Feather } from '@expo/vector-icons';
 import type { Product, ProductDraft } from '../types';
-import { colors, font, money, number, radius, space, stockLevel, stockMeta } from '../theme';
+import { colors, font, money, radius, space } from '../theme';
 import { Button, Chip, Field } from '../ui';
 import { Sheet } from './Sheet';
 
@@ -25,13 +25,13 @@ function validate(name: string, price: string, soluong: string, image: string): 
   if (!name.trim()) errors.name = 'Nhập tên sản phẩm.';
   else if (name.trim().length > 160) errors.name = 'Tên tối đa 160 ký tự.';
   const p = Number(price);
-  if (price.trim() === '') errors.price = 'Nhập giá sản phẩm.';
+  if (price.trim() === '') errors.price = 'Nhập giá bán.';
   else if (!Number.isSafeInteger(p) || p < 0) errors.price = 'Giá phải là số nguyên không âm.';
   const q = Number(soluong);
   if (soluong.trim() === '') errors.soluong = 'Nhập số lượng.';
   else if (!Number.isSafeInteger(q) || q < 0) errors.soluong = 'Số lượng phải là số nguyên không âm.';
-  if (!image.trim()) errors.image = 'Chọn ảnh từ điện thoại/máy tính, chụp ảnh hoặc dán URL.';
-  else if (!/^https?:\/\//i.test(image) && !/^data:image\//i.test(image)) errors.image = 'Đường dẫn ảnh phải bắt đầu bằng http(s)://';
+  if (!image.trim()) errors.image = 'Chọn hình ảnh sản phẩm.';
+  else if (!/^https?:\/\//i.test(image) && !/^data:image\//i.test(image)) errors.image = 'Đường dẫn ảnh không hợp lệ.';
   return errors;
 }
 
@@ -94,7 +94,7 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
   const pickFromGallery = async () => {
     if (Platform.OS !== 'web') {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) { setServerError('Vui lòng cấp quyền truy cập Thư viện ảnh trên điện thoại.'); return; }
+      if (!perm.granted) { setServerError('Vui lòng cấp quyền truy cập Thư viện ảnh.'); return; }
     }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.72, base64: true, allowsEditing: true, aspect: [1, 1] });
     if (!result.canceled) await applyAsset(result.assets?.[0]);
@@ -103,7 +103,7 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
   const takePhoto = async () => {
     if (Platform.OS !== 'web') {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
-      if (!perm.granted) { setServerError('Vui lòng cấp quyền Camera trên điện thoại để chụp ảnh sản phẩm.'); return; }
+      if (!perm.granted) { setServerError('Vui lòng cấp quyền Camera để chụp ảnh.'); return; }
     }
     try {
       const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.72, base64: true, allowsEditing: true, aspect: [1, 1] });
@@ -129,16 +129,13 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
   };
 
   const isUpload = image.startsWith('data:');
-  const previewPrice = Number.isSafeInteger(Number(price)) && Number(price) >= 0 ? Number(price) : 0;
-  const previewQty = Number.isSafeInteger(Number(soluong)) && Number(soluong) >= 0 ? Number(soluong) : 0;
-  const previewMeta = stockMeta[stockLevel(previewQty)];
 
   const preview = (
     <View style={[styles.previewCol, wide && styles.previewColWide]}>
-      <Text style={styles.label}>Hình ảnh sản phẩm <Text style={styles.code}>image</Text></Text>
+      <Text style={styles.label}>Hình ảnh sản phẩm</Text>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={image ? 'Đổi ảnh sản phẩm' : 'Chọn ảnh sản phẩm từ thiết bị'}
+        accessibilityLabel={image ? 'Đổi ảnh sản phẩm' : 'Chọn ảnh sản phẩm'}
         onPress={pickFromGallery}
         style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.drop, !!errors.image && styles.dropError, (pressed || hovered) && styles.dropActive]}
       >
@@ -147,8 +144,8 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
           <View style={styles.changeTag}><Feather name="refresh-cw" size={12} color={colors.surface} /><Text style={styles.changeText}>Đổi ảnh</Text></View>
         </> : <>
           <View style={styles.dropIcon}><Feather name="upload-cloud" size={22} color={colors.purple} /></View>
-          <Text style={styles.dropTitle}>Chạm để chọn ảnh từ thiết bị</Text>
-          <Text style={styles.dropHint}>Hỗ trợ Thư viện ảnh, Camera di động hoặc URL · tự động đẩy lên Cloudflare R2</Text>
+          <Text style={styles.dropTitle}>Tải ảnh sản phẩm lên</Text>
+          <Text style={styles.dropHint}>Hỗ trợ PNG, JPG hoặc WEBP tỉ lệ vuông 1:1</Text>
         </>}
       </Pressable>
 
@@ -163,13 +160,13 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
         </Pressable>
         <Pressable accessibilityRole="button" onPress={() => setMode((m) => (m === 'url' ? 'device' : 'url'))} style={({ pressed }) => [styles.sourceBtn, mode === 'url' && styles.sourceBtnSelected, pressed && styles.sourceBtnActive]}>
           <Feather name="link" size={15} color={colors.purple} />
-          <Text style={styles.sourceBtnText}>URL / Mẫu</Text>
+          <Text style={styles.sourceBtnText}>Link ảnh</Text>
         </Pressable>
       </View>
 
       {mode === 'url' && (
         <View style={{ gap: space.sm }}>
-          <Field label="Đường dẫn ảnh (https://...)" value={isUpload ? '' : image} onChangeText={setImage} placeholder={isUpload ? 'Đang dùng ảnh từ thiết bị' : 'https://...'} autoCapitalize="none" keyboardType="url" />
+          <Field label="Đường dẫn ảnh" value={isUpload ? '' : image} onChangeText={setImage} placeholder={isUpload ? 'Đang dùng ảnh từ thiết bị' : 'https://...'} autoCapitalize="none" keyboardType="url" />
           <View style={styles.quickRow}>
             {SAMPLE_IMAGES.map((item) => (
               <Chip key={item.label} label={item.label} selected={image === item.url} onPress={() => setImage(item.url)} />
@@ -178,8 +175,7 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
         </View>
       )}
 
-      {errors.image ? <Text style={styles.fieldError}>{errors.image}</Text>
-        : isUpload ? <Text style={styles.hint}>Ảnh từ thiết bị đã sẵn sàng tải lên Cloudflare R2.</Text> : null}
+      {errors.image ? <Text style={styles.fieldError}>{errors.image}</Text> : null}
     </View>
   );
 
@@ -187,21 +183,20 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
     <Sheet
       visible={visible}
       onClose={onClose}
-      title={initial ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
-      subtitle="Ý 1 & Ý 3: Nhập hình ảnh trên di động/web · chỉ lưu 4 trường name, price, soluong, image"
-      maxWidth={840}
+      title={initial ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'}
+      maxWidth={780}
       footer={<>
         <Button label="Hủy" variant="secondary" onPress={onClose} compact />
-        <Button label={saving ? (isUpload ? 'Đang tải lên R2…' : 'Đang lưu…') : initial ? 'Lưu thay đổi' : 'Thêm sản phẩm'} iconName="check" onPress={submit} loading={saving} compact />
+        <Button label={saving ? 'Đang lưu…' : initial ? 'Lưu thay đổi' : 'Thêm sản phẩm'} iconName="check" onPress={submit} loading={saving} compact />
       </>}
     >
       <ScrollView contentContainerStyle={[styles.body, wide && styles.bodyWide]} keyboardShouldPersistTaps="handled">
         {preview}
         <View style={styles.fields}>
-          <Field label="Tên sản phẩm · name" value={name} onChangeText={setName} placeholder="Ví dụ: Son kem lì Velvet Mây" error={errors.name} maxLength={160} />
+          <Field label="Tên sản phẩm" value={name} onChangeText={setName} placeholder="Ví dụ: Son kem lì Velvet Mây" error={errors.name} maxLength={160} />
 
           <View style={{ gap: 8 }}>
-            <Field label="Giá sản phẩm · price" value={price} onChangeText={(v) => setPrice(v.replace(/[^\d]/g, ''))} keyboardType="number-pad" placeholder="299000" suffix="VNĐ" error={errors.price} hint={price && !errors.price ? money.format(Number(price)) : undefined} />
+            <Field label="Giá bán" value={price} onChangeText={(v) => setPrice(v.replace(/[^\d]/g, ''))} keyboardType="number-pad" placeholder="299000" suffix="VNĐ" error={errors.price} hint={price && !errors.price ? money.format(Number(price)) : undefined} />
             <View style={styles.quickRow}>
               {QUICK_PRICES.map((p) => (
                 <Chip key={p} label={`${p / 1000}k`} selected={Number(price) === p} onPress={() => setPrice(String(p))} />
@@ -210,34 +205,12 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
           </View>
 
           <View style={{ gap: 8 }}>
-            <Field label="Số lượng · soluong" value={soluong} onChangeText={(v) => setSoluong(v.replace(/[^\d]/g, ''))} keyboardType="number-pad" placeholder="20" suffix="sản phẩm" error={errors.soluong} />
+            <Field label="Số lượng tồn kho" value={soluong} onChangeText={(v) => setSoluong(v.replace(/[^\d]/g, ''))} keyboardType="number-pad" placeholder="20" suffix="sản phẩm" error={errors.soluong} />
             <View style={styles.quickRow}>
               {QUICK_STOCKS.map((q) => (
                 <Chip key={q} label={`+${q}`} selected={false} onPress={() => setSoluong(String((Number(soluong) || 0) + q))} />
               ))}
-              <Chip label="Đặt = 0" selected={soluong === '0'} onPress={() => setSoluong('0')} />
-            </View>
-          </View>
-
-          <View style={styles.mobilePreviewCard}>
-            <View style={styles.mobilePreviewHeader}>
-              <Feather name="smartphone" size={13} color={colors.purple} />
-              <Text style={styles.mobilePreviewHeaderText}>Xem trước hiển thị trên di động (Ý 3)</Text>
-            </View>
-            <View style={styles.mobilePreviewRow}>
-              <View style={styles.mobileThumbWrap}>
-                {image ? <Image source={{ uri: image }} style={styles.mobileThumb} resizeMode="cover" /> : <Feather name="image" size={18} color={colors.purpleSoft} />}
-              </View>
-              <View style={{ flex: 1, gap: 3 }}>
-                <Text numberOfLines={1} style={styles.mobilePreviewName}>{name.trim() || 'Tên sản phẩm sẽ hiển thị tại đây'}</Text>
-                <Text style={styles.mobilePreviewPrice}>{money.format(previewPrice)}</Text>
-                <View style={styles.mobilePreviewMetaRow}>
-                  <View style={[styles.miniBadge, { backgroundColor: previewMeta.bg }]}>
-                    <Text style={[styles.miniBadgeText, { color: previewMeta.fg }]}>{previewMeta.label}</Text>
-                  </View>
-                  <Text style={styles.mobilePreviewStock}>SL: {number.format(previewQty)}</Text>
-                </View>
-              </View>
+              <Chip label="Hết hàng (0)" selected={soluong === '0'} onPress={() => setSoluong('0')} />
             </View>
           </View>
 
@@ -257,10 +230,9 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: space.xl, paddingBottom: space.xl, gap: space.xl },
   bodyWide: { flexDirection: 'row', gap: 28 },
   previewCol: { gap: space.md },
-  previewColWide: { width: 290 },
-  fields: { flex: 1, gap: 16 },
+  previewColWide: { width: 270 },
+  fields: { flex: 1, gap: 18 },
   label: { fontFamily: font.medium, fontSize: 13, color: colors.ink },
-  code: { fontFamily: font.regular, fontSize: 12, color: colors.muted },
   drop: { aspectRatio: 1, borderRadius: radius.md, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#C4B3DE', backgroundColor: colors.canvas, alignItems: 'center', justifyContent: 'center', padding: space.lg, overflow: 'hidden', gap: space.sm },
   dropActive: { backgroundColor: colors.lilac, borderColor: colors.purpleSoft },
   dropError: { borderColor: colors.dangerSolid },
@@ -276,20 +248,7 @@ const styles = StyleSheet.create({
   sourceBtnActive: { backgroundColor: colors.lilacDeep },
   sourceBtnText: { fontFamily: font.semibold, fontSize: 12, color: colors.purple },
   quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  hint: { fontFamily: font.regular, fontSize: 12, color: colors.muted, lineHeight: 18 },
   fieldError: { fontFamily: font.medium, fontSize: 12, color: colors.danger, lineHeight: 18 },
-  mobilePreviewCard: { backgroundColor: colors.canvas, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: space.md, gap: space.sm },
-  mobilePreviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  mobilePreviewHeaderText: { fontFamily: font.semibold, fontSize: 11, color: colors.purple },
-  mobilePreviewRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: colors.surface, padding: 10, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line },
-  mobileThumbWrap: { width: 54, height: 54, borderRadius: radius.sm, backgroundColor: '#F8ECEF', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  mobileThumb: { width: '100%', height: '100%' },
-  mobilePreviewName: { fontFamily: font.semibold, fontSize: 13, color: colors.ink },
-  mobilePreviewPrice: { fontFamily: font.semibold, fontSize: 13, color: colors.purple },
-  mobilePreviewMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
-  miniBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  miniBadgeText: { fontFamily: font.semibold, fontSize: 10 },
-  mobilePreviewStock: { fontFamily: font.regular, fontSize: 11, color: colors.muted },
   serverError: { flexDirection: 'row', gap: space.sm, backgroundColor: colors.dangerSoft, padding: space.md, borderRadius: radius.sm },
   serverErrorText: { flex: 1, fontFamily: font.medium, fontSize: 13, lineHeight: 20, color: colors.danger },
 });

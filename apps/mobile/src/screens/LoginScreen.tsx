@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import { api, API_URL } from '../api';
+import { api } from '../api';
 import { colors, font, radius, space } from '../theme';
 import { Brand, Button, Field } from '../ui';
 
@@ -25,19 +25,22 @@ export function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
 
   return (
     <SafeAreaView style={styles.page}>
-      <View style={styles.banner}><Text style={styles.bannerText}>Kênh người bán · Bài giữa kỳ Lập trình đa nền tảng</Text></View>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={[styles.scroll, wide && styles.scrollWide]} keyboardShouldPersistTaps="handled">
           <View style={[styles.layout, wide && styles.layoutWide]}>
             <View style={[styles.intro, wide && styles.introWide]}>
               <Text style={styles.introMark}>mây.</Text>
-              <Text style={[styles.introTitle, !wide && styles.introTitleSmall]}>Quản lý sản phẩm{'\n'}của shop, gọn gàng.</Text>
-              <Text style={styles.introCopy}>Thêm, sửa, xóa sản phẩm và tải ảnh trực tiếp từ máy tính hoặc điện thoại. Dữ liệu lưu trên MongoDB Atlas, ảnh lưu trên Cloudflare R2.</Text>
+              <Text style={[styles.introTitle, !wide && styles.introTitleSmall]}>Không gian quản lý{'\n'}cửa hàng của bạn.</Text>
+              <Text style={styles.introCopy}>Cập nhật danh mục sản phẩm, giá bán và theo dõi tồn kho theo thời gian thực trên cả máy tính lẫn điện thoại.</Text>
               {wide && (
                 <View style={styles.introList}>
-                  {[['database', 'Chỉ 4 trường: name, price, soluong, image'], ['smartphone', 'Chạy trên Web, Android và iOS'], ['image', 'Ảnh tải lên R2, hiển thị mọi thiết bị']].map(([iconName, text]) => (
+                  {[
+                    ['package', 'Quản lý danh mục và tồn kho trực quan'],
+                    ['smartphone', 'Đồng bộ tức thì giữa Web và ứng dụng di động'],
+                    ['trending-up', 'Cảnh báo sớm mặt hàng sắp hết hoặc hết hàng'],
+                  ].map(([iconName, text]) => (
                     <View key={text} style={styles.introItem}>
-                      <View style={styles.introIcon}><Feather name={iconName as 'database'} size={15} color={colors.purple} /></View>
+                      <View style={styles.introIcon}><Feather name={iconName as 'package'} size={15} color={colors.purple} /></View>
                       <Text style={styles.introItemText}>{text}</Text>
                     </View>
                   ))}
@@ -47,8 +50,8 @@ export function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
 
             <View style={[styles.panel, wide && styles.panelWide]}>
               {!wide && <Brand size={30} />}
-              <Text style={styles.panelTitle}>Đăng nhập kênh người bán</Text>
-              <Text style={styles.panelMuted}>Dùng tài khoản quản trị được cấu hình trên máy chủ.</Text>
+              <Text style={styles.panelTitle}>Đăng nhập Kênh người bán</Text>
+              <Text style={styles.panelMuted}>Nhập thông tin tài khoản quản trị để tiếp tục.</Text>
               <View style={styles.form}>
                 <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" returnKeyType="next" />
                 <View>
@@ -63,7 +66,6 @@ export function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
                 )}
                 <Button label="Đăng nhập" iconName="arrow-right" onPress={submit} loading={loading} />
               </View>
-              <Text style={styles.endpoint}>Máy chủ API: {API_URL}</Text>
             </View>
           </View>
         </ScrollView>
@@ -74,14 +76,12 @@ export function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.surface },
-  banner: { backgroundColor: colors.banner, paddingVertical: 9, paddingHorizontal: 16 },
-  bannerText: { fontFamily: font.regular, fontSize: 11, color: colors.bannerText, textAlign: 'center' },
   scroll: { flexGrow: 1, padding: space.lg },
   scrollWide: { justifyContent: 'center', padding: space.xxxl },
   layout: { gap: space.xl, width: '100%', maxWidth: 1120, alignSelf: 'center' },
   layoutWide: { flexDirection: 'row', gap: 70, alignItems: 'stretch' },
   intro: { backgroundColor: colors.lilac, borderRadius: radius.md, padding: space.xl },
-  introWide: { flex: 1, padding: 40, minHeight: 520 },
+  introWide: { flex: 1, padding: 40, minHeight: 500 },
   introMark: { fontFamily: font.extrabold, fontSize: 22, color: colors.purple, marginBottom: space.xl },
   introTitle: { fontFamily: font.bold, fontSize: 40, lineHeight: 52, letterSpacing: -1.4, color: colors.ink },
   introTitleSmall: { fontSize: 28, lineHeight: 38, letterSpacing: -0.8 },
@@ -90,13 +90,12 @@ const styles = StyleSheet.create({
   introItem: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   introIcon: { width: 32, height: 32, borderRadius: radius.sm, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   introItemText: { fontFamily: font.medium, fontSize: 13, color: '#55506A' },
-  panel: { gap: space.sm },
-  panelWide: { flex: 1, paddingTop: 30, maxWidth: 460 },
+  panel: { gap: space.sm, justifyContent: 'center' },
+  panelWide: { flex: 1, maxWidth: 440 },
   panelTitle: { fontFamily: font.semibold, fontSize: 24, lineHeight: 34, color: colors.ink, marginTop: space.sm },
   panelMuted: { fontFamily: font.regular, fontSize: 13, lineHeight: 22, color: colors.muted },
   form: { gap: 18, marginTop: space.xl },
   toggle: { fontFamily: font.medium, fontSize: 12, color: colors.purple, alignSelf: 'flex-end', marginTop: space.sm, paddingVertical: 4 },
   error: { flexDirection: 'row', gap: space.sm, alignItems: 'flex-start', backgroundColor: colors.dangerSoft, padding: space.md, borderRadius: radius.sm },
   errorText: { flex: 1, fontFamily: font.medium, fontSize: 13, lineHeight: 20, color: colors.danger },
-  endpoint: { fontFamily: font.regular, fontSize: 11, color: colors.muted, marginTop: space.xl },
 });

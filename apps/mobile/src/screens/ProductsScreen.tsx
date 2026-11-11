@@ -233,7 +233,7 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
 
   const handleBulkImport = async (items: ProductDraft[]) => {
     await api.bulkCreate(token, items);
-    setToast(`Đã nhập ${items.length} sản phẩm vào CSDL`);
+    setToast(`Đã nhập ${items.length} sản phẩm`);
     await load('refresh');
   };
 
@@ -252,11 +252,10 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
           <View style={{ flex: 1, gap: 5 }}>
             <SectionNote>Kho hàng của shop</SectionNote>
             <Text accessibilityRole="header" style={styles.h1}>Quản lý sản phẩm</Text>
-            <Text style={styles.lead}>Thêm, sửa, xóa, điều chỉnh nhanh tồn kho và đồng bộ ảnh Cloudflare R2.</Text>
+            <Text style={styles.lead}>Theo dõi danh mục, điều chỉnh tồn kho và cập nhật giá bán.</Text>
           </View>
           <View style={styles.headingActions}>
-            <Button label="Di động (Ý 3)" variant="secondary" iconName="smartphone" onPress={() => setMobileModal(true)} compact />
-            <Button label="CSDL JSON" variant="secondary" iconName="database" onPress={() => setDataModal(true)} compact />
+            <Button label="Nhập / Xuất" variant="secondary" iconName="download" onPress={() => setDataModal(true)} compact />
             <Button label="Thêm sản phẩm" iconName="plus" onPress={() => setEditor({ open: true })} compact />
           </View>
         </View>
@@ -410,30 +409,17 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
           <View style={styles.phoneNotch} />
           <Pressable onPress={() => setMobileFrame(false)} style={styles.exitPhoneBtn}>
             <Feather name="maximize-2" size={12} color={colors.surface} />
-            <Text style={styles.exitPhoneText}>Web</Text>
+            <Text style={styles.exitPhoneText}>Màn hình rộng</Text>
           </Pressable>
-        </View>
-      )}
-      {tablet && (
-        <View style={styles.banner}>
-          <Text style={styles.bannerText} numberOfLines={1}>
-            Kênh người bán · Dữ liệu lưu trên MongoDB Atlas, ảnh trên Cloudflare R2
-          </Text>
         </View>
       )}
       <View style={styles.siteHeader}>
         <View style={[styles.headerInner, { paddingHorizontal: pad }]}>
           <Brand size={tablet ? 34 : 26} />
-          <Text style={styles.headerLabel}>{tablet ? 'Kênh người bán' : `${stats.total} SP`}</Text>
+          <Text style={styles.headerLabel}>{tablet ? 'Kênh người bán' : `${stats.total} sản phẩm`}</Text>
           <View style={{ flex: 1 }} />
           {!tablet && (
-            <IconButton name="database" label="Công cụ CSDL JSON" onPress={() => setDataModal(true)} tone="plain" size={36} />
-          )}
-          {Platform.OS === 'web' && (
-            <Pressable onPress={() => setMobileFrame((v) => !v)} style={styles.frameToggle}>
-              <Feather name={mobileFrame ? 'monitor' : 'smartphone'} size={14} color={colors.purple} />
-              <Text style={styles.frameToggleText}>{mobileFrame ? 'Web' : 'Khung Di động'}</Text>
-            </Pressable>
+            <IconButton name="download" label="Nhập / Xuất dữ liệu" onPress={() => setDataModal(true)} tone="plain" size={36} />
           )}
           {tablet && <Text style={styles.headerUser}>admin@example.com</Text>}
           {tablet ? (
@@ -453,11 +439,10 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
             <View style={styles.nav}>
               <View style={[styles.navItem, styles.navActive]}><Feather name="box" size={16} color={colors.purple} /><Text style={[styles.navText, styles.navTextActive]}>Sản phẩm ({stats.total})</Text></View>
               <Pressable onPress={() => setEditor({ open: true })} style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.navItem, (pressed || hovered) && styles.navHover]}><Feather name="plus-square" size={16} color={colors.muted} /><Text style={styles.navText}>Thêm sản phẩm</Text></Pressable>
-              <Pressable onPress={() => setDataModal(true)} style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.navItem, (pressed || hovered) && styles.navHover]}><Feather name="database" size={16} color={colors.muted} /><Text style={styles.navText}>Xuất / Nhập JSON</Text></Pressable>
-              <Pressable onPress={() => setMobileModal(true)} style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.navItem, (pressed || hovered) && styles.navHover]}><Feather name="smartphone" size={16} color={colors.muted} /><Text style={styles.navText}>Di động & QR (Ý 3)</Text></Pressable>
-              <Pressable onPress={() => setMobileFrame(true)} style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.navItem, (pressed || hovered) && styles.navHover]}><Feather name="eye" size={16} color={colors.muted} /><Text style={styles.navText}>Mô phỏng Điện thoại</Text></Pressable>
+              <Pressable onPress={() => setDataModal(true)} style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.navItem, (pressed || hovered) && styles.navHover]}><Feather name="download" size={16} color={colors.muted} /><Text style={styles.navText}>Nhập / Xuất dữ liệu</Text></Pressable>
+              <Pressable onPress={() => setMobileModal(true)} style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.navItem, (pressed || hovered) && styles.navHover]}><Feather name="smartphone" size={16} color={colors.muted} /><Text style={styles.navText}>Ứng dụng di động</Text></Pressable>
             </View>
-            <View style={styles.sideNote}><Text style={styles.sideNoteText}>Cơ sở dữ liệu chỉ gồm đúng 4 trường: name, price, soluong, image theo yêu cầu đề bài.</Text></View>
+            <View style={styles.sideNote}><Text style={styles.sideNoteText}>Quản lý danh mục, hình ảnh và tồn kho đồng bộ trực tuyến.</Text></View>
           </View>
         )}
         <FlatList
@@ -500,7 +485,7 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
       <ProductDetailModal product={detail} onClose={() => setDetail(undefined)} onEdit={openEdit} onDuplicate={duplicateProduct} onDelete={openDelete} onAdjustStock={adjustStock} />
       <DataToolsModal visible={dataModal} products={products} onClose={() => setDataModal(false)} onBulkImport={handleBulkImport} onNotify={setToast} />
       <MobileConnectModal visible={mobileModal} mobileFrame={mobileFrame} onToggleMobileFrame={() => setMobileFrame((v) => !v)} onClose={() => setMobileModal(false)} />
-      <ConfirmDialog visible={!!deleting} title="Xóa sản phẩm này?" message={`“${deleting?.name ?? ''}” sẽ bị xóa vĩnh viễn khỏi cơ sở dữ liệu.`} confirmLabel="Xóa sản phẩm" onCancel={() => setDeleting(undefined)} onConfirm={confirmDelete} loading={deleteBusy} />
+      <ConfirmDialog visible={!!deleting} title="Xóa sản phẩm này?" message={`“${deleting?.name ?? ''}” sẽ bị xóa vĩnh viễn khỏi cửa hàng.`} confirmLabel="Xóa sản phẩm" onCancel={() => setDeleting(undefined)} onConfirm={confirmDelete} loading={deleteBusy} />
       <Toast message={toast} onHide={hideToast} />
     </SafeAreaView>
   );
@@ -526,13 +511,9 @@ const styles = StyleSheet.create({
   phoneNotch: { width: 96, height: 18, borderRadius: 10, backgroundColor: '#14121D' },
   exitPhoneBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.purple, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
   exitPhoneText: { fontFamily: font.semibold, fontSize: 10, color: colors.surface },
-  banner: { backgroundColor: colors.banner, paddingVertical: 8, paddingHorizontal: 16 },
-  bannerText: { fontFamily: font.regular, fontSize: 11, color: colors.bannerText, textAlign: 'center' },
   siteHeader: { borderBottomWidth: 1, borderBottomColor: colors.line, backgroundColor: colors.surface },
-  headerInner: { width: '100%', maxWidth: 1320, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  headerInner: { width: '100%', maxWidth: 1320, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
   headerLabel: { fontFamily: font.medium, fontSize: 12, color: colors.muted, borderLeftWidth: 1, borderLeftColor: colors.line, paddingLeft: 10 },
-  frameToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.lilac, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.lineStrong },
-  frameToggleText: { fontFamily: font.semibold, fontSize: 11, color: colors.purple },
   headerUser: { fontFamily: font.regular, fontSize: 12, color: colors.muted },
   layout: { flex: 1, flexDirection: 'row', gap: 40, width: '100%', maxWidth: 1320, alignSelf: 'center' },
   sidebar: { width: 210, paddingTop: 32, paddingRight: 25, borderRightWidth: 1, borderRightColor: colors.line },
