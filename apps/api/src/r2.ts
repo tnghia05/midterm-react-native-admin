@@ -1,6 +1,16 @@
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 
-const DEFAULT_R2_BUCKET_URL = 'https://2a9139b01c2879a36145249ccf9a63b6.r2.cloudflarestorage.com/nghianeegki';
+function resolveBucketUrl(): string | null {
+  if (process.env.R2_BUCKET_URL?.trim()) {
+    return process.env.R2_BUCKET_URL.trim();
+  }
+  const accountId = process.env.R2_ACCOUNT_ID?.trim();
+  const bucketName = process.env.R2_BUCKET_NAME?.trim() || 'nghianeegki';
+  if (accountId) {
+    return `https://${accountId}.r2.cloudflarestorage.com/${bucketName}`;
+  }
+  return null;
+}
 
 function sha256Hex(data: Buffer | string): string {
   return createHash('sha256').update(data).digest('hex');
@@ -18,13 +28,14 @@ function getSigningKey(secretAccessKey: string, dateStamp: string, region: strin
 }
 
 export function isR2Configured(): boolean {
-  return Boolean(process.env.R2_ACCESS_KEY_ID?.trim() && process.env.R2_SECRET_ACCESS_KEY?.trim());
+  return Boolean(resolveBucketUrl() && process.env.R2_ACCESS_KEY_ID?.trim() && process.env.R2_SECRET_ACCESS_KEY?.trim());
 }
 
 export async function uploadDataImageToR2(image: string): Promise<string> {
   const match = image.match(/^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i);
   if (!match) return image;
-  if (!isR2Configured()) return image;
+  const resolvedUrl = resolveBucketUrl();
+  if (!resolvedUrl || !isR2Configured()) return image;
 
   const mimeType = match[1].toLowerCase();
   const base64Data = match[2];
@@ -32,7 +43,7 @@ export async function uploadDataImageToR2(image: string): Promise<string> {
   const ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : mimeType.includes('gif') ? 'gif' : 'jpg';
   const key = `products/${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
 
-  const bucketUrl = new URL(process.env.R2_BUCKET_URL ?? DEFAULT_R2_BUCKET_URL);
+  const bucketUrl = new URL(resolvedUrl);
   const host = bucketUrl.host;
   const bucketPath = bucketUrl.pathname.replace(/\/$/, '');
   const canonicalUri = `${bucketPath}/${key}`;
