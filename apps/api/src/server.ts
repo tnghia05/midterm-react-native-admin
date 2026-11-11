@@ -1,12 +1,16 @@
 import 'dotenv/config';
 import { timingSafeEqual } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import dns from 'node:dns';
+import { readFile, writeFile } from 'node:fs/promises';
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import jwt from 'jsonwebtoken';
 import mongoose, { isObjectIdOrHexString } from 'mongoose';
 import { Product } from './product.model.js';
+import { isR2Configured, uploadDataImageToR2 } from './r2.js';
 import { parseProductInput } from './validation.js';
+
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const app = express();
 const port = Number(process.env.PORT ?? 3001);
@@ -16,6 +20,11 @@ const seedPath = new URL('../data/products.json', import.meta.url);
 
 app.use(cors());
 app.use(express.json({ limit: '4mb' }));
+
+async function syncExportFile() {
+  const docs = await Product.find({}, { _id: 0, name: 1, price: 1, soluong: 1, image: 1 }).sort({ _id: -1 }).lean();
+  await writeFile(seedPath, `${JSON.stringify(docs, null, 2)}\n`, 'utf8').catch(() => undefined);
+}
 
 function sameText(left: string, right: string) {
   const a = Buffer.from(left);
@@ -30,7 +39,7 @@ function requireAuth(request: Request, response: Response, next: NextFunction) {
   catch { response.status(401).json({ message: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn' }); }
 }
 
-app.get('/api/health', (_request, response) => response.json({ status: 'ok', database: mongoose.connection.name }));
+app.get('/api/health', (_request, response) => response.json({ status: 'ok', database: mongoose.connection.name, r2: isR2Configured() }));
 
 app.post('/api/auth/login', (request, response) => {
   const email = typeof request.body?.email === 'string' ? request.body.email.trim().toLowerCase() : '';
@@ -49,15 +58,23 @@ app.get('/api/products', requireAuth, async (_request, response, next) => {
 });
 
 app.post('/api/products', requireAuth, async (request, response, next) => {
-  try { response.status(201).json(await Product.create(parseProductInput(request.body))); }
-  catch (error) { next(error); }
+  try {
+    const input = parseProductInput(request.body);
+    input.image = await uploadDataImageToR2(input.image);
+    const created = await Product.create(input);
+    await syncExportFile();
+    response.status(201).json(created);
+  } catch (error) { next(error); }
 });
 
 app.patch('/api/products/:id', requireAuth, async (request, response, next) => {
   try {
     if (!isObjectIdOrHexString(request.params.id)) return response.status(400).json({ message: 'ID không hợp lệ' });
-    const product = await Product.findByIdAndUpdate(request.params.id, parseProductInput(request.body), { new: true, runValidators: true });
+    const input = parseProductInput(request.body);
+    input.image = await uploadDataImageToR2(input.image);
+    const product = await Product.findByIdAndUpdate(request.params.id, input, { new: true, runValidators: true });
     if (!product) return response.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+    await syncExportFile();
     response.json(product);
   } catch (error) { next(error); }
 });
@@ -66,6 +83,7 @@ app.delete('/api/products/:id', requireAuth, async (request, response, next) => 
   try {
     if (!isObjectIdOrHexString(request.params.id)) return response.status(400).json({ message: 'ID không hợp lệ' });
     if (!await Product.findByIdAndDelete(request.params.id)) return response.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+    await syncExportFile();
     response.status(204).end();
   } catch (error) { next(error); }
 });
@@ -80,4 +98,5 @@ if (await Product.countDocuments() === 0) {
   const raw = JSON.parse(await readFile(seedPath, 'utf8')) as unknown[];
   await Product.insertMany(raw.map(parseProductInput));
 }
+await syncExportFile();
 app.listen(port, host, () => console.log(`API đang chạy tại http://${host}:${port}`));
