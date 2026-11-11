@@ -240,15 +240,9 @@ async function connectMongoWithRetry() {
   try {
     await mongoose.connect(uri, { family: 4, serverSelectionTimeoutMS: 5000 });
     mongoConnected = true;
-    if ((await Product.countDocuments()) === 0 && memoryProducts.length > 0) {
+    if (memoryProducts.length > 0) {
+      await Product.deleteMany({});
       await Product.insertMany(memoryProducts.map(({ name, price, soluong, image }) => ({ name, price, soluong, image })));
-    } else if (memoryProducts.length > 0) {
-      // Ensure local changes made while offline are synced if Mongo has fewer items
-      const mongoCount = await Product.countDocuments();
-      if (mongoCount !== memoryProducts.length) {
-        await Product.deleteMany({});
-        await Product.insertMany(memoryProducts.map(({ name, price, soluong, image }) => ({ name, price, soluong, image })));
-      }
     }
     await syncFromMongo();
     console.log('Đã kết nối và đồng bộ MongoDB Atlas thành công.');
