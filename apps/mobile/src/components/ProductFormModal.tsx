@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   dropIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.lilac, alignItems: 'center', justifyContent: 'center' },
   dropTitle: { fontFamily: font.semibold, fontSize: 14, color: colors.purple, textAlign: 'center' },
   dropHint: { fontFamily: font.regular, fontSize: 11, color: colors.muted, textAlign: 'center', lineHeight: 17 },
-  previewImage: { ...StyleSheet.absoluteFillObject },
+  previewImage: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   changeTag: { position: 'absolute', bottom: 10, right: 10, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(41,38,55,0.78)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 4 },
   changeText: { fontFamily: font.medium, fontSize: 11, color: colors.surface },
   sourceBtnRow: { flexDirection: 'row', gap: space.sm },
