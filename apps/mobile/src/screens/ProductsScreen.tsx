@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { api } from '../api';
@@ -65,7 +65,16 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [dataModal, setDataModal] = useState(false);
   const [mobileModal, setMobileModal] = useState(false);
+  const [lanIp, setLanIp] = useState('192.168.1.13');
   const [toast, setToast] = useState('');
+
+  useEffect(() => {
+    api.health().then((info) => {
+      if (info.lanIps?.length && info.lanIps[0]) {
+        setLanIp(info.lanIps[0]);
+      }
+    }).catch(() => undefined);
+  }, []);
 
   const load = useCallback(async (mode: 'initial' | 'refresh' = 'initial') => {
     mode === 'refresh' ? setRefreshing(true) : setLoading(true);
@@ -255,6 +264,7 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
             <Text style={styles.lead}>Theo dõi danh mục, điều chỉnh tồn kho và cập nhật giá bán.</Text>
           </View>
           <View style={styles.headingActions}>
+            <Button label="Mã QR Expo" variant="secondary" iconName="smartphone" onPress={() => setMobileModal(true)} compact />
             <Button label="Nhập / Xuất" variant="secondary" iconName="download" onPress={() => setDataModal(true)} compact />
             <Button label="Thêm sản phẩm" iconName="plus" onPress={() => setEditor({ open: true })} compact />
           </View>
@@ -440,9 +450,17 @@ export function ProductsScreen({ token, onLogout }: { token: string; onLogout: (
               <View style={[styles.navItem, styles.navActive]}><Feather name="box" size={16} color={colors.purple} /><Text style={[styles.navText, styles.navTextActive]}>Sản phẩm ({stats.total})</Text></View>
               <Pressable onPress={() => setEditor({ open: true })} style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.navItem, (pressed || hovered) && styles.navHover]}><Feather name="plus-square" size={16} color={colors.muted} /><Text style={styles.navText}>Thêm sản phẩm</Text></Pressable>
               <Pressable onPress={() => setDataModal(true)} style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.navItem, (pressed || hovered) && styles.navHover]}><Feather name="download" size={16} color={colors.muted} /><Text style={styles.navText}>Nhập / Xuất dữ liệu</Text></Pressable>
-              <Pressable onPress={() => setMobileModal(true)} style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.navItem, (pressed || hovered) && styles.navHover]}><Feather name="smartphone" size={16} color={colors.muted} /><Text style={styles.navText}>Ứng dụng di động</Text></Pressable>
+              <Pressable onPress={() => setMobileModal(true)} style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.navItem, (pressed || hovered) && styles.navHover]}><Feather name="smartphone" size={16} color={colors.muted} /><Text style={styles.navText}>Mã QR Expo</Text></Pressable>
             </View>
-            <View style={styles.sideNote}><Text style={styles.sideNoteText}>Quản lý danh mục, hình ảnh và tồn kho đồng bộ trực tuyến.</Text></View>
+            <Pressable onPress={() => setMobileModal(true)} style={styles.sideQrCard}>
+              <Text style={styles.sideQrTitle}>Mở trên Expo Go</Text>
+              <Image
+                source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=6&data=${encodeURIComponent(`exp://${lanIp}:8081`)}` }}
+                style={styles.sideQrImage}
+                resizeMode="contain"
+              />
+              <Text style={styles.sideQrUrl}>{`exp://${lanIp}:8081`}</Text>
+            </Pressable>
           </View>
         )}
         <FlatList
@@ -527,8 +545,10 @@ const styles = StyleSheet.create({
   navHover: { backgroundColor: colors.canvas },
   navText: { fontFamily: font.medium, fontSize: 13, color: '#726C7B' },
   navTextActive: { color: colors.purple, fontFamily: font.semibold },
-  sideNote: { marginTop: 26, backgroundColor: '#F6F4F8', padding: 14, borderRadius: 7 },
-  sideNoteText: { fontFamily: font.regular, fontSize: 11, lineHeight: 18, color: '#81758D' },
+  sideQrCard: { marginTop: 22, backgroundColor: colors.canvas, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: 12, alignItems: 'center', gap: 8 },
+  sideQrTitle: { fontFamily: font.semibold, fontSize: 12, color: colors.ink },
+  sideQrImage: { width: 132, height: 132, borderRadius: radius.sm, backgroundColor: colors.surface },
+  sideQrUrl: { fontFamily: font.medium, fontSize: 11, color: colors.purple },
   heading: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md },
   headingActions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   h1: { fontFamily: font.bold, fontSize: 28, letterSpacing: -0.8, color: colors.ink },
