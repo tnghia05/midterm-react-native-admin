@@ -20,7 +20,7 @@ const jwtSecret = process.env.JWT_SECRET ?? 'development-secret-change-this-valu
 const seedPath = new URL('../data/products.json', import.meta.url);
 
 app.use(cors());
-app.use(express.json({ limit: '4mb' }));
+app.use(express.json({ limit: '25mb' }));
 
 type StoredProduct = ProductInput & { _id: string };
 let memoryProducts: StoredProduct[] = [];

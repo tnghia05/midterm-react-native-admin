@@ -60,9 +60,34 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
 
   useEffect(() => { if (submitted) setErrors(validate(name, price, soluong, image)); }, [submitted, name, price, soluong, image]);
 
-  const applyAsset = (asset?: ImagePicker.ImagePickerAsset) => {
+  const compressDataUrlIfNeeded = async (uri: string): Promise<string> => {
+    if (Platform.OS !== 'web' || !uri.startsWith('data:image/') || uri.length < 700_000 || typeof document === 'undefined') {
+      return uri;
+    }
+    return new Promise((resolve) => {
+      const img = new globalThis.Image();
+      img.onload = () => {
+        const maxSide = 1080;
+        const scale = Math.min(1, maxSide / Math.max(img.width || 1, img.height || 1));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(uri); return; }
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.84));
+      };
+      img.onerror = () => resolve(uri);
+      img.src = uri;
+    });
+  };
+
+  const applyAsset = async (asset?: ImagePicker.ImagePickerAsset) => {
     if (!asset) return;
-    setImage(asset.base64 ? `data:${asset.mimeType ?? 'image/jpeg'};base64,${asset.base64}` : asset.uri);
+    const rawUri = asset.base64 ? `data:${asset.mimeType ?? 'image/jpeg'};base64,${asset.base64}` : asset.uri;
+    setImage(await compressDataUrlIfNeeded(rawUri));
     setServerError('');
   };
 
@@ -72,7 +97,7 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
       if (!perm.granted) { setServerError('Vui lòng cấp quyền truy cập Thư viện ảnh trên điện thoại.'); return; }
     }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.72, base64: true, allowsEditing: true, aspect: [1, 1] });
-    if (!result.canceled) applyAsset(result.assets?.[0]);
+    if (!result.canceled) await applyAsset(result.assets?.[0]);
   };
 
   const takePhoto = async () => {
@@ -82,7 +107,7 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
     }
     try {
       const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.72, base64: true, allowsEditing: true, aspect: [1, 1] });
-      if (!result.canceled) applyAsset(result.assets?.[0]);
+      if (!result.canceled) await applyAsset(result.assets?.[0]);
     } catch {
       await pickFromGallery();
     }
@@ -95,7 +120,8 @@ export function ProductFormModal({ visible, initial, onClose, onSave }: Props) {
     if (Object.keys(next).length) return;
     setSaving(true); setServerError('');
     try {
-      await onSave({ name: name.trim(), price: Number(price), soluong: Number(soluong), image: image.trim() });
+      const finalImage = await compressDataUrlIfNeeded(image.trim());
+      await onSave({ name: name.trim(), price: Number(price), soluong: Number(soluong), image: finalImage });
       onClose();
     } catch (cause) {
       setServerError(cause instanceof Error ? cause.message : 'Không lưu được sản phẩm');

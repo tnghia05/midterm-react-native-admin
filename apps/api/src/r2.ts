@@ -22,14 +22,14 @@ export function isR2Configured(): boolean {
 }
 
 export async function uploadDataImageToR2(image: string): Promise<string> {
-  const match = image.match(/^data:(image\/(?:png|jpe?g|webp));base64,(.+)$/i);
+  const match = image.match(/^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i);
   if (!match) return image;
   if (!isR2Configured()) return image;
 
   const mimeType = match[1].toLowerCase();
   const base64Data = match[2];
   const buffer = Buffer.from(base64Data, 'base64');
-  const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
+  const ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : mimeType.includes('gif') ? 'gif' : 'jpg';
   const key = `products/${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
 
   const bucketUrl = new URL(process.env.R2_BUCKET_URL ?? DEFAULT_R2_BUCKET_URL);
